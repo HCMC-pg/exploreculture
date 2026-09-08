@@ -1,0 +1,207 @@
+@import "tailwindcss";
+
+:root {
+  --theme-primary: #f59e0b;
+  --theme-primary-hover: #fbbf24;
+  --theme-accent: #fbbf24;
+  --theme-bg: #0c0a09;
+  --theme-header-bg: rgba(12, 10, 9, 0.95);
+  --theme-card: #1c1917;
+  --theme-border: rgba(245, 158, 11, 0.45);
+  --theme-glow: rgba(245, 158, 11, 0.35);
+  --theme-gradient: linear-gradient(135deg, #d97706, #f59e0b, #fbbf24);
+  --theme-badge-bg: rgba(245, 158, 11, 0.2);
+  --theme-badge-text: #fde68a;
+}
+
+::selection {
+  background-color: var(--theme-primary);
+  color: #000000;
+}
+
+.theme-card-bg {
+  background-color: var(--theme-card);
+  border-color: var(--theme-border);
+}
+
+.theme-btn-gradient {
+  background: var(--theme-gradient);
+  color: #09090b;
+  box-shadow: 0 4px 14px 0 var(--theme-glow);
+}
+
+.theme-btn-gradient:hover {
+  filter: brightness(1.1);
+  transform: scale(1.02);
+}
+
+.theme-text-primary {
+  color: var(--theme-primary);
+}
+
+.theme-text-accent {
+  color: var(--theme-accent);
+}
+
+.theme-border {
+  border-color: var(--theme-border);
+}
+
+@layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .preserve-3d {
+    transform-style: preserve-3d;
+  }
+  .backface-hidden {
+    backface-visibility: hidden;
+  }
+}
+
+/* Custom Dynamic Era Theme Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-bg, rgba(28, 25, 23, 0.6));
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-primary, rgba(217, 119, 6, 0.4));
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-accent, rgba(245, 158, 11, 0.7));
+}
+
+/* Shimmer and badge shine */
+@keyframes goldShine {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.gold-shimmer {
+  background: linear-gradient(90deg, rgba(217,119,6,0.1) 0%, rgba(251,191,36,0.5) 50%, rgba(217,119,6,0.1) 100%);
+  background-size: 200% 100%;
+  animation: goldShine 3s infinite;
+}
+
+@keyframes cameraZoomIn {
+  0% {
+    transform: scale(1.0) translate(0%, 0%);
+  }
+  50% {
+    transform: scale(1.15) translate(-2%, -1%);
+  }
+  100% {
+    transform: scale(1.25) translate(-4%, -2%);
+  }
+}
+
+@keyframes cameraZoomOut {
+  0% {
+    transform: scale(1.25) translate(-3%, -2%);
+  }
+  50% {
+    transform: scale(1.12) translate(1%, 0%);
+  }
+  100% {
+    transform: scale(1.02) translate(2%, 1%);
+  }
+}
+
+@keyframes cameraDiagonal {
+  0% {
+    transform: scale(1.08) translate(-3%, -3%);
+  }
+  50% {
+    transform: scale(1.18) translate(0%, 0%);
+  }
+  100% {
+    transform: scale(1.12) translate(3%, 3%);
+  }
+}
+
+@keyframes cameraFlyover {
+  0% {
+    transform: scale(1.05) translate(0%, 2%) rotate(0deg);
+  }
+  50% {
+    transform: scale(1.2) translate(-2%, -3%) rotate(-1deg);
+  }
+  100% {
+    transform: scale(1.28) translate(2%, -5%) rotate(1deg);
+  }
+}
+
+@keyframes subtleFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes subtleTilt {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(2deg);
+  }
+}
+
+@keyframes scanline {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+.animate-cameraZoomIn {
+  animation: cameraZoomIn 14s ease-in-out infinite alternate;
+}
+
+.animate-cameraZoomOut {
+  animation: cameraZoomOut 14s ease-in-out infinite alternate;
+}
+
+.animate-cameraDiagonal {
+  animation: cameraDiagonal 16s ease-in-out infinite alternate;
+}
+
+.animate-cameraFlyover {
+  animation: cameraFlyover 18s ease-in-out infinite alternate;
+}
+
+.animate-subtleFloat {
+  animation: subtleFloat 4s ease-in-out infinite;
+}
+
+.animate-subtleTilt {
+  animation: subtleTilt 3s ease-in-out infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 12s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
