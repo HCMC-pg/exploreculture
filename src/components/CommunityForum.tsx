@@ -308,6 +308,52 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
   const [dmSelectedSticker, setDmSelectedSticker] = useState<HeritageSticker | null>(null);
   const [showDmStickerPicker, setShowDmStickerPicker] = useState<boolean>(false);
   const [isRecipientTyping, setIsRecipientTyping] = useState<boolean>(false);
+  const [commentReactions, setCommentReactions] = useState<Record<string, { heart: number; coffee: number; photo: number; fire: number }>>({});
+  const [postFriendReactions, setPostFriendReactions] = useState<Record<string, { coffee: number; photo: number; fire: number }>>({});
+
+  // Reaction handlers for friendly community banter
+  const handleReactToComment = (commentId: string, type: 'heart' | 'coffee' | 'photo' | 'fire') => {
+    sound.playClick();
+    setCommentReactions(prev => {
+      const current = prev[commentId] || { heart: 1, coffee: 0, photo: 0, fire: 0 };
+      return {
+        ...prev,
+        [commentId]: {
+          ...current,
+          [type]: current[type] + 1
+        }
+      };
+    });
+  };
+
+  const handleReactToPost = (postId: string, type: 'coffee' | 'photo' | 'fire') => {
+    sound.playClick();
+    setPostFriendReactions(prev => {
+      const current = prev[postId] || { coffee: 2, photo: 1, fire: 3 };
+      return {
+        ...prev,
+        [postId]: {
+          ...current,
+          [type]: current[type] + 1
+        }
+      };
+    });
+    showToast(
+      type === 'coffee' ? 'Bạn vừa mời một ly cà phê vợt nóng hổi! ☕' :
+      type === 'photo' ? 'Đã khen góc ảnh di sản tuyệt đẹp! 📸' :
+      'Đã tán thưởng bài viết đỉnh chóp! 🔥',
+      'success'
+    );
+  };
+
+  const handleReplyToComment = (postId: string, authorName: string) => {
+    sound.playClick();
+    setExpandedPostId(postId);
+    setCommentInput(prev => ({
+      ...prev,
+      [postId]: `@${authorName} `
+    }));
+  };
 
   // Quick Prompt Suggestions for DMs
   const QUICK_CHAT_SUGGESTIONS = [
@@ -443,17 +489,35 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     setSelectedCommentSticker(prev => ({ ...prev, [postId]: null }));
     setShowStickerPickerForPost(null);
 
-    // Interactive Community Response: Another scholar replies after 2.5s
+    // Interactive Community Response: Another scholar friend replies with warm banter
     setTimeout(() => {
       const targetPost = posts.find(p => p.id === postId);
-      const responder = targetPost?.authorName !== 'Lê Thảo My' ? INITIAL_TRAVELERS[1] : INITIAL_TRAVELERS[2];
+      const textLower = (text || '').toLowerCase();
+      let responder = targetPost?.authorName !== 'Lê Thảo My' ? INITIAL_TRAVELERS[1] : INITIAL_TRAVELERS[2];
+      let replyContent = `Cảm ơn ý kiến chia sẻ rất sắc sảo của bạn @${activeUser.name}! Rất mong được cùng thảo luận thêm về di sản này!`;
+
+      if (textLower.includes('cà phê') || textLower.includes('quán') || textLower.includes('uống')) {
+        responder = INITIAL_TRAVELERS[1]; // Lê Thảo My
+        replyContent = `@${activeUser.name} Đúng gu mình luôn nè! Chiều nay ghé quán cà phê vợt Cheo Leo bên quận 3 vừa làm ly bạc xỉu vừa đàm đạo lịch sử nhé bạn ơi! ☕`;
+      } else if (textLower.includes('mẹo') || textLower.includes('nhiệm vụ') || textLower.includes('câu đố') || textLower.includes('gợi ý')) {
+        responder = INITIAL_TRAVELERS[0]; // Trần Văn Kiệt
+        replyContent = `@${activeUser.name} Đang giải mật thư hả bạn? Nhớ quan sát kỹ niên đại trên bia đá và hoa văn lan can sảnh nha, nếu kẹt cứ bấm Yêu Cầu Gợi Ý là ra liền! 🧭`;
+      } else if (textLower.includes('ảnh') || textLower.includes('chụp') || textLower.includes('hoàng hôn')) {
+        responder = INITIAL_TRAVELERS[0]; // Trần Văn Kiệt
+        replyContent = `@${activeUser.name} Góc ảnh hoàng hôn ở Cột cờ Thủ Ngữ nhìn sang Bến Bạch Đằng lúc 17h30 lên màu ánh đồng đẹp mê ly luôn đó bạn ơi! 📸`;
+      } else if (text?.startsWith('@')) {
+        const mentionedName = text.split(' ')[0].replace('@', '');
+        const matched = INITIAL_TRAVELERS.find(t => t.name.includes(mentionedName));
+        if (matched) responder = matched;
+        replyContent = `Dạ chào bạn @${activeUser.name}! Nhận được tin của bạn là mình hào hứng liền, tụi mình cùng cố gắng thu thập đủ huy hiệu nhé! ❤️`;
+      }
       
       const replyComment = {
         id: `comment_reply_${Date.now()}`,
         authorName: responder.name,
         authorAvatar: responder.avatar,
         authorTitle: responder.title,
-        content: `Cảm ơn ý kiến chia sẻ rất sắc sảo của bạn @${activeUser.name}! Rất mong được cùng thảo luận thêm về di sản này!`,
+        content: replyContent,
         sticker: HERITAGE_STICKERS[Math.floor(Math.random() * HERITAGE_STICKERS.length)],
         timestamp: 'Vừa xong',
         likes: 1
@@ -470,7 +534,7 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
         return p;
       }));
       sound.playDanTranhNote(659.25, 0.4);
-    }, 2800);
+    }, 2400);
   };
 
   // Generate contextual AI/Traveler response based on recipient identity
@@ -677,27 +741,46 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     sound.playSuccess();
     showToast('Tin nhắn của bạn đã được truyền phát tới Hội Quán Lữ Khách!', 'info');
 
-    // Simulate real-time public chatter reply after 2.5s
+    // Simulate real-time public chatter reply with friendly companionship
     setTimeout(() => {
-      const responder = INITIAL_TRAVELERS[Math.floor(Math.random() * INITIAL_TRAVELERS.length)];
-      const communityReplies = [
-        `@${activeUser.name} Chào bạn! Rất vui được gặp bạn trong hội quán! Bạn đã giải được mật thư nào mới chưa?`,
-        `@${activeUser.name} Hay quá bạn ơi! Vùng đất Nam Bộ đúng là kho tàng văn hóa vô tận.`,
-        `@${activeUser.name} Tuyệt vời! Khi nào có dịp cùng lập đội săn huy hiệu Huyền Thoại nhé!`
-      ];
+      const textLower = text.toLowerCase();
+      let responder = INITIAL_TRAVELERS[Math.floor(Math.random() * INITIAL_TRAVELERS.length)];
+      let replyText = `@${activeUser.name} Chào bạn! Rất vui được gặp bạn trong hội quán! Bạn đã giải được mật thư nào mới chưa?`;
+
+      if (textLower.includes('cà phê') || textLower.includes('uống') || textLower.includes('quán') || textLower.includes('ăn')) {
+        responder = INITIAL_TRAVELERS[1]; // Lê Thảo My
+        replyText = `@${activeUser.name} Haha chuẩn bài người Sài Gòn luôn bạn ơi! Chiều nay tụi mình hay ngồi quán Cà phê vợt Cheo Leo bên hẻm 109 Nguyễn Thiện Thuật, vừa nhâm nhi bạc xỉu vừa ngắm phố xá, chill hết nấc! Bữa nào ghé chung nha! ☕`;
+      } else if (textLower.includes('chụp') || textLower.includes('ảnh') || textLower.includes('hoàng hôn') || textLower.includes('bến bạch đằng')) {
+        responder = INITIAL_TRAVELERS[0]; // Trần Văn Kiệt
+        replyText = `@${activeUser.name} Canh tầm 17h15 đến 17h45 ra Bến Bạch Đằng hoặc Cột cờ Thủ Ngữ nha bạn! Nắng chiều rọi xuống mặt sông lung linh như dát vàng, góc nào lên ảnh cũng nghệ thuật! 📸`;
+      } else if (textLower.includes('mật thư') || textLower.includes('gợi ý') || textLower.includes('nhiệm vụ') || textLower.includes('câu đố')) {
+        responder = INITIAL_TRAVELERS[0]; // Trần Văn Kiệt
+        replyText = `@${activeUser.name} Bạn đang khảo cứu địa điểm nào? Cứ bình tĩnh soi niên đại trên bia đá và hoa văn lan can sảnh là thấy manh mối! Nếu bí quá thì nhấn "Yêu Cầu Gợi Ý" anh Cố vấn Ba Son hướng dẫn chi tiết từng nấc nhé! 🧭`;
+      } else if (textLower.includes('chào') || textLower.includes('hello') || textLower.includes('mới')) {
+        responder = INITIAL_TRAVELERS[2]; // Nguyễn Minh Khang
+        replyText = `@${activeUser.name} Chào mừng người anh em đến với Hội Quán! Tụi mình ở đây trao đổi lịch sử như anh em trong nhà, bạn cứ thoải mái hỏi han và chia sẻ trải nghiệm nha! ✨`;
+      } else {
+        const communityReplies = [
+          `@${activeUser.name} Hay quá bạn ơi! Vùng đất Nam Bộ đúng là kho tàng văn hóa vô tận, càng tìm hiểu càng say mê.`,
+          `@${activeUser.name} Tuyệt vời! Khi nào có dịp cùng lập đội săn huy hiệu Lữ Khách Huyền Thoại nhé!`,
+          `@${activeUser.name} Đồng ý hai tay! Khám phá di sản cùng những người bạn hợp cạ là vui nhất đời!`
+        ];
+        replyText = communityReplies[Math.floor(Math.random() * communityReplies.length)];
+      }
+
       const replyMsg = {
         id: `live_rep_${Date.now()}`,
         senderName: responder.name,
         senderAvatar: responder.avatar,
         senderTitle: responder.title,
-        text: communityReplies[Math.floor(Math.random() * communityReplies.length)],
+        text: replyText,
         sticker: HERITAGE_STICKERS[Math.floor(Math.random() * HERITAGE_STICKERS.length)],
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
         locationTag: responder.favoriteHeritage
       };
       setLiveMessages(prev => [...prev, replyMsg]);
       sound.playDanTranhNote(659.25, 0.4);
-    }, 2500);
+    }, 2000);
   };
 
   // Filtered Travelers Directory by Name, Age, Province, and Friend Status
@@ -962,31 +1045,61 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                   </div>
 
                   {/* Post Actions & Comments Bar */}
-                  <div className="pt-3 border-t border-stone-800 flex items-center justify-between text-xs text-stone-400">
-                    <div className="flex items-center gap-2">
+                  <div className="pt-3 border-t border-stone-800 flex flex-wrap items-center justify-between gap-2 text-xs text-stone-400">
+                    <div className="flex items-center gap-1.5 flex-wrap">
                       <button
                         onClick={() => handleLikePost(post.id)}
-                        className={`min-h-[36px] flex items-center gap-1.5 px-3 py-1 rounded-xl transition-all ${
+                        className={`min-h-[34px] flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all ${
                           post.isLiked 
                             ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 font-bold' 
                             : 'hover:bg-stone-800 text-stone-300'
                         }`}
                       >
-                        <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-rose-400 text-rose-400' : ''}`} />
+                        <Heart className={`w-3.5 h-3.5 ${post.isLiked ? 'fill-rose-400 text-rose-400' : ''}`} />
                         <span>{post.likes} Thích</span>
                       </button>
 
                       <button
                         onClick={() => setExpandedPostId(isExpanded ? null : post.id)}
-                        className="min-h-[36px] flex items-center gap-1.5 px-3 py-1 rounded-xl hover:bg-stone-800 text-stone-300 transition-colors"
+                        className="min-h-[34px] flex items-center gap-1 px-2.5 py-1 rounded-xl hover:bg-stone-800 text-stone-300 transition-colors"
                       >
-                        <MessageSquare className="w-4 h-4 text-amber-400" />
+                        <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
                         <span>{post.commentsCount} Bình Luận</span>
                       </button>
+
+                      {/* Friendly Community Reactions */}
+                      <div className="flex items-center gap-1 pl-1 border-l border-stone-800">
+                        <button
+                          onClick={() => handleReactToPost(post.id, 'coffee')}
+                          className="min-h-[34px] flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-amber-500/20 text-stone-300 hover:text-amber-300 transition-colors"
+                          title="Mời ly cà phê vợt nóng hổi"
+                        >
+                          <span>☕</span>
+                          <span className="text-[11px] font-semibold">{postFriendReactions[post.id]?.coffee || 2}</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleReactToPost(post.id, 'photo')}
+                          className="min-h-[34px] flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-blue-500/20 text-stone-300 hover:text-blue-300 transition-colors"
+                          title="Khen góc ảnh đẹp"
+                        >
+                          <span>📸</span>
+                          <span className="text-[11px] font-semibold">{postFriendReactions[post.id]?.photo || 1}</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleReactToPost(post.id, 'fire')}
+                          className="min-h-[34px] flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-orange-500/20 text-stone-300 hover:text-orange-400 transition-colors"
+                          title="Tán thưởng đỉnh chóp"
+                        >
+                          <span>🔥</span>
+                          <span className="text-[11px] font-semibold">{postFriendReactions[post.id]?.fire || 3}</span>
+                        </button>
+                      </div>
                     </div>
 
                     <span className="text-[11px] text-stone-500 hidden sm:inline">
-                      Nhấn bình luận để tương tác cùng học giả
+                      Bình luận & đàm đạo như những người bạn
                     </span>
                   </div>
 
@@ -994,7 +1107,7 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                   {isExpanded && (
                     <div className="pt-3 border-t border-stone-800/60 space-y-3 animate-fadeIn">
                       {post.comments.map(c => (
-                        <div key={c.id} className="p-3 rounded-2xl bg-stone-950/80 border border-stone-800/80 space-y-1">
+                        <div key={c.id} className="p-3 rounded-2xl bg-stone-950/80 border border-stone-800/80 space-y-1.5">
                           <div className="flex items-center justify-between">
                             <div 
                               onClick={() => handleInspectTravelerByName(c.authorName, c.authorAvatar, c.authorTitle)}
@@ -1009,11 +1122,58 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                           </div>
                           <p className="text-xs text-stone-300 pl-8 leading-relaxed">{c.content}</p>
                           {c.sticker && (
-                            <div className="pl-8 pt-1 flex items-center gap-1.5 text-xs text-amber-300">
+                            <div className="pl-8 pt-0.5 flex items-center gap-1.5 text-xs text-amber-300">
                               <span className="text-lg">{c.sticker.icon}</span>
                               <span className="font-semibold">{c.sticker.name}</span>
                             </div>
                           )}
+
+                          {/* Comment Friendly Reaction & Reply Bar */}
+                          <div className="pl-8 pt-1 flex items-center justify-between text-[11px] text-stone-400 border-t border-stone-900/60">
+                            <div className="flex items-center gap-2.5">
+                              <button
+                                onClick={() => handleReactToComment(c.id, 'heart')}
+                                className="flex items-center gap-1 hover:text-rose-400 transition-colors"
+                                title="Thả tim thân thiết"
+                              >
+                                <span>❤️</span>
+                                <span className="font-semibold">{commentReactions[c.id]?.heart || 1}</span>
+                              </button>
+                              <button
+                                onClick={() => handleReactToComment(c.id, 'coffee')}
+                                className="flex items-center gap-1 hover:text-amber-300 transition-colors"
+                                title="Mời cà phê vợt"
+                              >
+                                <span>☕</span>
+                                <span className="font-semibold">{commentReactions[c.id]?.coffee || 0}</span>
+                              </button>
+                              <button
+                                onClick={() => handleReactToComment(c.id, 'photo')}
+                                className="flex items-center gap-1 hover:text-blue-300 transition-colors"
+                                title="Góc ảnh xịn"
+                              >
+                                <span>📸</span>
+                                <span className="font-semibold">{commentReactions[c.id]?.photo || 0}</span>
+                              </button>
+                              <button
+                                onClick={() => handleReactToComment(c.id, 'fire')}
+                                className="flex items-center gap-1 hover:text-orange-400 transition-colors"
+                                title="Tuyệt vời"
+                              >
+                                <span>🔥</span>
+                                <span className="font-semibold">{commentReactions[c.id]?.fire || 0}</span>
+                              </button>
+                            </div>
+
+                            <button
+                              onClick={() => handleReplyToComment(post.id, c.authorName)}
+                              className="flex items-center gap-1 text-amber-400 hover:text-amber-300 font-semibold transition-colors"
+                              title="Trả lời bạn bè"
+                            >
+                              <MessageCircle className="w-3 h-3" />
+                              <span>Trả lời bạn bè</span>
+                            </button>
+                          </div>
                         </div>
                       ))}
 
@@ -1262,11 +1422,11 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                     </div>
                   </div>
 
-                  {/* Action Buttons: Add Friend, Message, Inspect */}
-                  <div className="grid grid-cols-3 gap-2 pt-2 border-t border-stone-800 text-xs font-bold">
+                  {/* Action Buttons: Add Friend, Message, Invite Coffee, Inspect */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 pt-2 border-t border-stone-800 text-xs font-bold">
                     <button
                       onClick={() => handleToggleFriend(t.id)}
-                      className={`min-h-[40px] py-2 px-2 rounded-xl flex items-center justify-center gap-1 transition-all font-bold ${
+                      className={`min-h-[40px] py-2 px-1.5 rounded-xl flex items-center justify-center gap-1 transition-all font-bold text-[11px] ${
                         isFriend
                           ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-500/30'
                           : isPending
@@ -1294,15 +1454,34 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
 
                     <button
                       onClick={() => handleStartDmWithTraveler(t)}
-                      className="min-h-[40px] py-2 px-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-bold flex items-center justify-center gap-1 shadow-md shadow-amber-500/20 transition-all hover:scale-102"
+                      className="min-h-[40px] py-2 px-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-bold flex items-center justify-center gap-1 shadow-md shadow-amber-500/20 transition-all text-[11px]"
                     >
                       <MessageCircle className="w-3.5 h-3.5" />
                       <span>Nhắn Tin</span>
                     </button>
 
                     <button
+                      onClick={() => {
+                        sound.playClick();
+                        setSelectedRecipient({
+                          id: t.id,
+                          name: t.name,
+                          avatar: t.avatar,
+                          title: t.title
+                        });
+                        setDmInputText(`Chào ${t.name}! Chiều nay mình tính ghé làm ly cà phê vợt rồi đi dạo khảo cứu ${t.favoriteHeritage}, bạn có muốn đi cùng không? ☕`);
+                        setActiveTab('direct_messages');
+                      }}
+                      className="min-h-[40px] py-2 px-1.5 rounded-xl bg-amber-500/20 hover:bg-amber-500 hover:text-stone-950 text-amber-300 border border-amber-500/40 font-bold flex items-center justify-center gap-1 transition-all text-[11px]"
+                      title="Rủ bạn cùng đi cà phê khảo cứu"
+                    >
+                      <span>☕</span>
+                      <span>Rủ Cà Phê</span>
+                    </button>
+
+                    <button
                       onClick={() => handleInspectTravelerByName(t.name, t.avatar, t.title)}
-                      className="min-h-[40px] py-2 px-2 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-700 hover:border-amber-500 text-amber-300 font-bold flex items-center justify-center gap-1 transition-all"
+                      className="min-h-[40px] py-2 px-1.5 rounded-xl bg-stone-950 hover:bg-stone-800 border border-stone-700 hover:border-amber-500 text-amber-300 font-bold flex items-center justify-center gap-1 transition-all text-[11px]"
                     >
                       <User className="w-3.5 h-3.5 text-amber-400" />
                       <span>Căn Cước</span>
@@ -1609,7 +1788,33 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
             </div>
 
             {/* Input Bar */}
-            <div className="pt-3 border-t border-stone-800 space-y-2 mt-4">
+            <div className="pt-3 border-t border-stone-800 space-y-2.5 mt-4">
+              {/* Friendly Conversation Starters */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+                <span className="text-[10px] text-amber-400 font-bold uppercase tracking-wider shrink-0 flex items-center gap-1">
+                  <span>☕</span>
+                  <span>Tán Gẫu Nhanh:</span>
+                </span>
+                {[
+                  '☕ Chiều nay cà phê vợt không cả nhà?',
+                  '📸 Ai biết góc chụp hoàng hôn Bến Bạch Đằng đẹp không?',
+                  '🧭 Xin mẹo giải mật thư Bưu Điện Sài Gòn với!',
+                  '👋 Chào mọi người, mình là lữ khách mới đến!'
+                ].map((chip, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    onClick={() => {
+                      sound.playClick();
+                      setLiveInputText(chip);
+                    }}
+                    className="px-2.5 py-1 rounded-full bg-stone-950 hover:bg-amber-500/20 text-stone-300 hover:text-amber-200 border border-stone-800 hover:border-amber-500/40 text-[11px] shrink-0 transition-all active:scale-95"
+                  >
+                    {chip}
+                  </button>
+                ))}
+              </div>
+
               <div className="flex items-center gap-2">
                 <input
                   type="text"

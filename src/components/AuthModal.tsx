@@ -151,7 +151,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
           authProvider: 'google',
           googleEmail: targetEmail,
           email: targetEmail,
-          lpPoints: Math.max(currentUser.lpPoints, data.user.lpPoints || 550),
+          lpPoints: data.user.lpPoints !== undefined ? data.user.lpPoints : currentUser.lpPoints,
           lastSyncedAt: new Date().toISOString()
         };
 
@@ -602,7 +602,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                       <div className="flex-1">
                         <h4 className="text-xs font-bold text-stone-100 flex items-center gap-1.5">
                           <span>Truy Cập Bằng Google Cá Nhân</span>
-                          <span className="px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[9px] font-black border border-blue-500/30">+550 LP</span>
+                          <span className="px-1.5 py-0.5 rounded-full bg-blue-500/20 text-blue-300 text-[9px] font-black border border-blue-500/30">Google Sync</span>
                         </h4>
                         <p className="text-[11px] text-stone-400 mt-0.5">
                           Tự động lưu trữ tiến trình học tập, huy hiệu và sở thích khám phá trên mọi thiết bị
@@ -693,7 +693,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                         </svg>
-                        <span>Đăng Nhập Bằng Google & Lưu Trữ Tiến Trình (+550 LP)</span>
+                        <span>Đăng Nhập Bằng Google & Lưu Trữ Tiến Trình & Sở Thích</span>
                       </>
                     )}
                   </button>
@@ -708,7 +708,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                     <div className="flex-1">
                       <h4 className="text-xs font-bold text-stone-100 flex items-center gap-1.5">
                         <span>Khởi Tạo / Cập Nhật Hồ Sơ Lữ Khách</span>
-                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-black border border-amber-500/30">+500 LP</span>
+                        <span className="px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[9px] font-black border border-amber-500/30">Hồ Sơ Cá Nhân</span>
                       </h4>
                       <p className="text-[11px] text-stone-400 mt-0.5">
                         Nhập tên và email/định danh của bạn để bảo lưu kết quả khảo cứu di sản

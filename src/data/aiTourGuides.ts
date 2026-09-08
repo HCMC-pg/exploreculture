@@ -45,7 +45,7 @@ export const AI_TOUR_GUIDES: AITourGuide[] = [
     name: 'Minh Triết (Triết Phượt Thủ)',
     title: 'Thợ Săn Mật Thư & Nhiếp Ảnh Gia Trẻ',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=200&q=80',
-    tagline: 'Săn góc check-in hoàng kim, giải mật thư tốc độ và khám phá quán ngon độc lạ',
+    tagline: 'Săn góc check-in di sản tuyệt đẹp, giải mật thư tốc độ và khám phá quán ngon độc lạ',
     personality: 'Năng động, nhiệt huyết, siêu rành các góc chụp ảnh đẹp và mẹo di chuyển linh hoạt.',
     greeting: 'Yo chào bạn! Mình là Triết. Hãy chuẩn bị máy ảnh và tinh thần nhạy bén, tụi mình sẽ khám phá những bí mật cực đỉnh mà ít ai biết tới!',
     voiceStyle: 'Giọng nam trẻ trung, nhanh nhẹn, đầy nhiệt huyết',

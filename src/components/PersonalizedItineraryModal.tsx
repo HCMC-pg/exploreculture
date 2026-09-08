@@ -131,6 +131,26 @@ export const PersonalizedItineraryModal: React.FC<PersonalizedItineraryModalProp
 
   const [isGenerating, setIsGenerating] = useState<boolean>(false);
   const [selectedStopIdx, setSelectedStopIdx] = useState<number>(0);
+  const [isPlayingNarration, setIsPlayingNarration] = useState<boolean>(false);
+
+  const handlePlayAudioNarration = (narrationText: string) => {
+    sound.playClick();
+    if (isPlayingNarration) {
+      setIsPlayingNarration(false);
+      return;
+    }
+    setIsPlayingNarration(true);
+    // Play melodious Vietnamese traditional instruments notes
+    sound.playDanTranhNote(329.63, 0.4);
+    setTimeout(() => sound.playDanTranhNote(392.00, 0.45), 200);
+    setTimeout(() => sound.playDanTranhNote(440.00, 0.45), 450);
+    setTimeout(() => sound.playDanTranhNote(523.25, 0.5), 700);
+    setTimeout(() => sound.playDanTranhNote(659.25, 0.55), 1000);
+    setTimeout(() => sound.playDanTranhNote(783.99, 0.65), 1350);
+    setTimeout(() => {
+      setIsPlayingNarration(false);
+    }, 4000);
+  };
 
   const handleAutoOptimize = () => {
     sound.playClick();
@@ -333,7 +353,7 @@ export const PersonalizedItineraryModal: React.FC<PersonalizedItineraryModalProp
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
                   {[
                     { id: 'scholar', label: '📜 Khảo Cứu', desc: 'Lịch sử & kiến trúc' },
-                    { id: 'photographer', label: '📸 Nhiếp Ảnh', desc: 'Góc chụp hoàng kim' },
+                    { id: 'photographer', label: '📸 Nhiếp Ảnh', desc: 'Góc chụp di sản ấn tượng' },
                     { id: 'spiritual', label: '🪷 Tâm Linh', desc: 'Chùa cổ & an yên' },
                     { id: 'foodie', label: '🍲 Ẩm Thực', desc: 'Vị xưa chợ truyền thống' },
                     { id: 'adventurer', label: '🧭 Thám Hiểm', desc: 'Địa đạo & địa danh' }
@@ -502,34 +522,133 @@ export const PersonalizedItineraryModal: React.FC<PersonalizedItineraryModalProp
               {generatedItinerary ? (
                 <>
                   {/* Route Header Overview Card */}
-                  <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div className="flex items-center gap-3">
-                      <img 
-                        src={generatedItinerary.tourGuide?.avatar || currentGuide.avatar} 
-                        alt="HDV" 
-                        className="w-11 h-11 rounded-2xl object-cover border-2 border-amber-400 shadow-md shrink-0" 
-                      />
-                      <div>
-                        <div className="flex items-center gap-1.5 flex-wrap">
-                          <h4 className="font-['Cinzel',serif] text-base font-bold text-amber-200">
-                            {generatedItinerary.title}
-                          </h4>
+                  <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/30 via-stone-900 to-stone-950 border border-amber-500/30 space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <img 
+                          src={generatedItinerary.tourGuide?.avatar || currentGuide.avatar} 
+                          alt="HDV" 
+                          className="w-12 h-12 rounded-2xl object-cover border-2 border-amber-400 shadow-md shrink-0" 
+                        />
+                        <div>
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <h4 className="font-['Cinzel',serif] text-base font-bold text-amber-200">
+                              {generatedItinerary.title}
+                            </h4>
+                          </div>
+                          <p className="text-xs text-stone-300 mt-0.5">
+                            HDV: <strong className="text-amber-300">{generatedItinerary.tourGuide?.name || currentGuide.name}</strong> • Thưởng: <strong className="text-emerald-400 font-mono">+{generatedItinerary.totalLPBonus} LP</strong>
+                          </p>
                         </div>
-                        <p className="text-xs text-stone-300 mt-0.5">
-                          HDV: <strong className="text-amber-300">{generatedItinerary.tourGuide?.name || currentGuide.name}</strong> • Điểm thưởng: <strong className="text-emerald-400 font-mono">+{generatedItinerary.totalLPBonus} LP</strong>
-                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2 sm:self-center shrink-0 flex-wrap">
+                        <div className="px-3 py-1 rounded-xl bg-stone-950 border border-stone-800 text-right">
+                          <span className="text-[10px] text-stone-400 block uppercase">Khoảng Cách</span>
+                          <span className="text-xs font-mono font-bold text-amber-400">{generatedItinerary.totalDistanceKm} km</span>
+                        </div>
+                        <div className="px-3 py-1 rounded-xl bg-stone-950 border border-stone-800 text-right">
+                          <span className="text-[10px] text-stone-400 block uppercase">Thời Gian</span>
+                          <span className="text-xs font-mono font-bold text-amber-300">{generatedItinerary.totalDurationHours}h</span>
+                        </div>
+                        {onOpenBaSonAI && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              sound.playClick();
+                              const routeStops = generatedItinerary.stops.map(s => s.locationName).join(' ➔ ');
+                              const prompt = `Cố vấn Ba Son ơi, hãy phân tích và tối ưu hóa lộ trình di sản "${generatedItinerary.title}" qua các trạm: ${routeStops}. Hãy cho tôi biết thêm những con hẻm cổ, mẹo di chuyển, thời điểm ánh sáng đẹp nhất và lưu ý văn hóa nhé!`;
+                              onClose();
+                              onOpenBaSonAI(prompt);
+                            }}
+                            className="px-3 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all hover:scale-102"
+                            title="Tham vấn Cố Vấn Ba Son để tối ưu lộ trình"
+                          >
+                            <Bot className="w-3.5 h-3.5" />
+                            <span>Hỏi Ba Son AI</span>
+                          </button>
+                        )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 sm:self-center shrink-0">
-                      <div className="px-3 py-1 rounded-xl bg-stone-950 border border-stone-800 text-right">
-                        <span className="text-[10px] text-stone-400 block uppercase">Khoảng Cách</span>
-                        <span className="text-xs font-mono font-bold text-amber-400">{generatedItinerary.totalDistanceKm} km</span>
+                    {/* Route Health & Eco Insight Badges */}
+                    <div className="pt-2 border-t border-stone-800/80 grid grid-cols-2 sm:grid-cols-4 gap-2 text-[11px]">
+                      <div className="p-2 rounded-xl bg-stone-950/80 border border-stone-800 flex items-center gap-2">
+                        <span className="text-base">🚶‍♂️</span>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block">Bước Chân Ước Tính</span>
+                          <span className="font-bold text-amber-300 font-mono">~{Math.round(generatedItinerary.totalDistanceKm * 1350).toLocaleString()} bước</span>
+                        </div>
                       </div>
-                      <div className="px-3 py-1 rounded-xl bg-stone-950 border border-stone-800 text-right">
-                        <span className="text-[10px] text-stone-400 block uppercase">Thời Gian</span>
-                        <span className="text-xs font-mono font-bold text-amber-300">{generatedItinerary.totalDurationHours}h</span>
+
+                      <div className="p-2 rounded-xl bg-stone-950/80 border border-stone-800 flex items-center gap-2">
+                        <span className="text-base">🔥</span>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block">Năng Lượng Tiêu Hao</span>
+                          <span className="font-bold text-orange-400 font-mono">~{Math.round(generatedItinerary.totalDistanceKm * 58)} kcal</span>
+                        </div>
                       </div>
+
+                      <div className="p-2 rounded-xl bg-stone-950/80 border border-stone-800 flex items-center gap-2">
+                        <span className="text-base">🌿</span>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block">Tiêu Chuẩn Xanh</span>
+                          <span className="font-bold text-emerald-400">100% Eco-Trail</span>
+                        </div>
+                      </div>
+
+                      <div className="p-2 rounded-xl bg-stone-950/80 border border-stone-800 flex items-center gap-2">
+                        <span className="text-base">🏆</span>
+                        <div>
+                          <span className="text-[10px] text-stone-400 block">Điểm Tri Thức</span>
+                          <span className="font-bold text-amber-400">+{generatedItinerary.totalLPBonus} LP</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Interactive Stepper Station Bar */}
+                  <div className="p-3 rounded-2xl bg-stone-950 border border-stone-800/80 space-y-2">
+                    <div className="flex items-center justify-between text-xs">
+                      <span className="text-amber-400 font-bold uppercase tracking-wider flex items-center gap-1.5 text-[11px]">
+                        <Compass className="w-3.5 h-3.5" /> Chuỗi Trạm Di Sản Đề Xuất
+                      </span>
+                      <span className="text-[10px] text-stone-400 font-mono">
+                        Trạm {selectedStopIdx + 1}/{generatedItinerary.stops.length}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center gap-2 overflow-x-auto pb-1">
+                      {generatedItinerary.stops.map((st, sIdx) => {
+                        const isCur = selectedStopIdx === sIdx;
+                        return (
+                          <React.Fragment key={st.locationId + sIdx}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                sound.playClick();
+                                setSelectedStopIdx(sIdx);
+                              }}
+                              className={`px-3 py-1.5 rounded-xl border flex items-center gap-2 shrink-0 transition-all ${
+                                isCur
+                                  ? 'bg-amber-500 text-stone-950 font-bold border-amber-400 shadow-md scale-102'
+                                  : 'bg-stone-900 hover:bg-stone-800 text-stone-300 border-stone-800'
+                              }`}
+                            >
+                              <span className={`w-5 h-5 rounded-full text-[10px] font-black flex items-center justify-center shrink-0 ${
+                                isCur ? 'bg-stone-950 text-amber-400' : 'bg-stone-800 text-stone-300'
+                              }`}>
+                                {sIdx + 1}
+                              </span>
+                              <span className="text-xs truncate max-w-[120px] sm:max-w-[160px]">{st.locationName}</span>
+                              {st.isVisited && <CheckCircle2 className={`w-3 h-3 ${isCur ? 'text-stone-950' : 'text-emerald-400'}`} />}
+                            </button>
+                            {sIdx < generatedItinerary.stops.length - 1 && (
+                              <span className="text-stone-600 font-bold shrink-0">➔</span>
+                            )}
+                          </React.Fragment>
+                        );
+                      })}
                     </div>
                   </div>
 
@@ -537,7 +656,7 @@ export const PersonalizedItineraryModal: React.FC<PersonalizedItineraryModalProp
                   <div className="space-y-2 flex-1 overflow-y-auto pr-1">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-bold text-amber-300 uppercase tracking-wider block">
-                        Lộ Trình {generatedItinerary.stops.length} Trạm Khám Phá
+                        Chi Tiết Lộ Trình {generatedItinerary.stops.length} Trạm Khám Phá
                       </span>
                       <span className="text-[11px] text-stone-400">
                         Bấm vào trạm để nghe thuyết minh & mẹo di sản
@@ -604,13 +723,31 @@ export const PersonalizedItineraryModal: React.FC<PersonalizedItineraryModalProp
                             {isSelected && (
                               <div className="mt-2.5 pt-2.5 border-t border-stone-800 text-xs space-y-2 animate-fadeIn">
                                 {stop.guideVoiceNarration && (
-                                  <div className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200/95 space-y-1">
+                                  <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 text-amber-200/95 space-y-2">
                                     <div className="flex items-center justify-between text-[11px] font-bold text-amber-300">
-                                      <span className="flex items-center gap-1">
-                                        <Bot className="w-3.5 h-3.5" /> Lời Thuyết Minh Của HDV AI:
+                                      <span className="flex items-center gap-1.5">
+                                        <Bot className="w-3.5 h-3.5 text-amber-400" /> Lời Thuyết Minh Của HDV AI:
                                       </span>
+                                      <button
+                                        type="button"
+                                        onClick={() => handlePlayAudioNarration(stop.guideVoiceNarration || '')}
+                                        className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-amber-500/20 hover:bg-amber-500 text-amber-300 hover:text-stone-950 font-bold text-[10px] transition-all shadow-sm"
+                                        title="Nghe giọng thuyết minh hòa quyện âm sắc Đàn Tranh Nam Bộ"
+                                      >
+                                        {isPlayingNarration ? (
+                                          <>
+                                            <span className="inline-block animate-pulse">🔊</span>
+                                            <span>Đang Thuyết Minh...</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <span>▶️</span>
+                                            <span>Nghe Thuyết Minh & Đàn Tranh</span>
+                                          </>
+                                        )}
+                                      </button>
                                     </div>
-                                    <p className="text-[11px] italic leading-relaxed text-stone-300">
+                                    <p className="text-[11px] italic leading-relaxed text-stone-300 pl-1 border-l-2 border-amber-500/40">
                                       "{stop.guideVoiceNarration}"
                                     </p>
                                   </div>

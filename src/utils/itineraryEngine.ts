@@ -68,7 +68,7 @@ const THEME_DETAILS: Record<ItineraryThemeType, {
   },
   urban_sketch_vintage: {
     label: 'Ký Họa Nghệ Thuật & Nhiếp Ảnh Hoài Cổ',
-    subtitle: 'Săn các góc chụp ảnh hoàng kim, ban công hoa sắt cổ kính và quán xá đậm chất thơ',
+    subtitle: 'Săn các góc chụp ảnh di sản tuyệt mỹ, ban công hoa sắt cổ kính và quán xá đậm chất thơ',
     badgeId: 'badge_ben_thanh',
     recommendedGuide: 'co_ba_sai_gon',
     locationFilter: (l: Location3D) => ['buu_dien_tphcm', 'duong_sach_hcm', 'cho_ben_thanh', 'bach_dinh_vung_tau'].includes(l.id) || l.category === 'architecture'

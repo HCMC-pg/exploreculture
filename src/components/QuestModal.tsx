@@ -104,6 +104,8 @@ export const QuestModal: React.FC<QuestModalProps> = ({
 
   // Track wrong attempts per step to strictly lock hints until failed >= 2 times
   const [wrongAttemptsCount, setWrongAttemptsCount] = useState<{ [index: number]: number }>({});
+  // Track explicit user hint requests
+  const [userRequestedHintSteps, setUserRequestedHintSteps] = useState<{ [index: number]: boolean }>({});
 
   // Active Traveler Buffs
   const buffs = getActiveTravelerBuffs();
@@ -967,12 +969,43 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 )}
               </div>
 
-              {/* SMART AI HINT ACCORDION - PROGRESSIVE HISTORICAL HINTS FOR ALL TRAVELERS */}
+              {/* SMART AI HINT ACCORDION - STRICT RULE: ONLY SHOW WHEN PLAYER FAILS MULTIPLE TIMES OR EXPLICITLY REQUESTS */}
               {(() => {
                 const currentFails = wrongAttemptsCount[currentStepIndex] || 0;
+                const hasUserRequested = !!userRequestedHintSteps[currentStepIndex];
+                const isHintEligible = currentFails >= 2 || hasUserRequested;
+
+                if (!isHintEligible) {
+                  return (
+                    <div className="p-3 rounded-2xl bg-stone-900/80 border border-stone-800/90 flex items-center justify-between gap-3 animate-fadeIn">
+                      <div className="flex items-center gap-2.5 text-xs text-stone-300">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                          <Sparkles className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <span className="font-bold text-stone-200 block">Cố Vấn Ba Son Đang Đồng Hành</span>
+                          <span className="text-[11px] text-stone-400">
+                            Tự suy luận nhận tối đa LP. Gợi ý sẽ tự động kích hoạt khi trả lời sai 2 lần, hoặc bạn có thể bấm yêu cầu.
+                          </span>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          sound.playClick();
+                          setUserRequestedHintSteps(prev => ({ ...prev, [currentStepIndex]: true }));
+                          setIsHintAccordionOpen(true);
+                        }}
+                        className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/40 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95"
+                      >
+                        <HelpCircle className="w-4 h-4 text-amber-400" />
+                        <span>Yêu Cầu Gợi Ý</span>
+                      </button>
+                    </div>
+                  );
+                }
 
                 return (
-                  <div className="rounded-2xl border transition-all overflow-hidden bg-amber-950/20 border-amber-500/40 shadow-sm">
+                  <div className="rounded-2xl border transition-all overflow-hidden bg-amber-950/20 border-amber-500/40 shadow-sm animate-fadeIn">
                     <button
                       onClick={() => setIsHintAccordionOpen(!isHintAccordionOpen)}
                       className="w-full px-4 py-2.5 flex items-center justify-between text-xs text-stone-300 hover:text-amber-200 transition-colors"
@@ -980,7 +1013,9 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                       <span className="font-bold flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                         <span className="text-amber-300 font-extrabold">
-                          Gợi Ý Cố Vấn Ba Son (Hỗ Trợ Luận Giải Di Sản)
+                          {currentFails >= 2 
+                            ? `Gợi Ý Cố Vấn Ba Son (Kích hoạt do đã thử ${currentFails} lần)` 
+                            : 'Gợi Ý Cố Vấn Ba Son (Mở theo yêu cầu của bạn)'}
                         </span>
                       </span>
                       <div className="flex items-center gap-2">
@@ -994,9 +1029,13 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                     {isHintAccordionOpen && (
                       <div className="p-3.5 border-t border-stone-800 space-y-3">
                         <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs text-stone-300 flex items-center justify-between flex-wrap gap-2">
-                          <span>Chọn mức độ trợ giúp từ Cố Vấn Ba Son để giải mã câu đố này:</span>
+                          <span>
+                            {currentFails >= 2 
+                              ? `Bạn đã thử ${currentFails} lần. Cố Vấn Ba Son gợi ý các manh mối sau:` 
+                              : 'Chọn mức độ trợ giúp từ Cố Vấn Ba Son để giải mã câu đố này:'}
+                          </span>
                           {currentFails > 0 && (
-                            <span className="text-[10px] text-amber-400 font-mono">
+                            <span className="text-[10px] text-amber-400 font-mono bg-stone-900 px-2 py-0.5 rounded border border-amber-500/20">
                               Đã thử {currentFails} lần
                             </span>
                           )}
@@ -1082,8 +1121,8 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                     {!isCorrect && (
                       <span className="text-[11px] font-mono text-rose-300 bg-rose-950/50 px-2 py-0.5 rounded border border-rose-500/30">
                         {(wrongAttemptsCount[currentStepIndex] || 1) >= 2 
-                          ? '💡 Gợi ý AI đã mở khóa bên trên!' 
-                          : `Cần thêm ${2 - (wrongAttemptsCount[currentStepIndex] || 1)} lần thử để mở gợi ý AI`}
+                          ? '💡 Cố Vấn Ba Son đã kích hoạt gợi ý hỗ trợ bên trên!' 
+                          : '💡 Bạn có thể bấm "Yêu Cầu Gợi Ý" hoặc thử sức lại'}
                       </span>
                     )}
                   </div>

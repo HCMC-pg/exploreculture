@@ -3,10 +3,10 @@ import { HistoricalThemeSkin, HistoricalThemeId } from '../types';
 export const HISTORICAL_THEME_SKINS: HistoricalThemeSkin[] = [
   {
     id: 'classic_amber',
-    name: 'Phương Nam Hoàng Kim',
+    name: 'Phương Nam Cổ Kính',
     era: 'Nguyên Bản Di Sản (Thế kỷ 19 - Hiện đại)',
-    tagline: 'Sắc vàng hoàng kim & Tinh hoa di sản phương Nam',
-    description: 'Phong cách nguyên bản cổ kính và thanh lịch với ánh hoàng kim phương Nam rạng ngời kết hợp cùng chiều sâu trầm mặc của di sản cổ truyền.',
+    tagline: 'Khám Phá Di Sản & Ký Ức Đô Thị Phương Nam',
+    description: 'Phong cách nguyên bản cổ kính và thanh lịch với ánh sắc truyền thống phương Nam rạng ngời kết hợp cùng chiều sâu trầm mặc của di sản cổ truyền.',
     previewColors: {
       primary: '#f59e0b',
       accent: '#fbbf24',
