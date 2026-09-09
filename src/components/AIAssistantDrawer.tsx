@@ -329,28 +329,28 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   {/* Render content with clean paragraph and markdown styling */}
                   <div className="space-y-2 prose-invert">
                     {msg.text.split('\n\n').map((para, pIdx) => {
-                      if (para.includes('### 📜 Nguồn Trích Dẫn Di Sản') || para.includes('Nguồn Trích Dẫn Di Sản & Thư Tịch')) {
+                      if (para.includes('### 📜 Nguồn') || para.includes('Nguồn Sử Liệu & Hồ Sơ') || para.includes('Nguồn Trích Dẫn') || para.includes('📜 Nguồn')) {
                         return (
-                          <div key={pIdx} className="p-3 my-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-100 text-xs">
-                            <div className="font-bold text-amber-300 flex items-center gap-1.5 mb-1.5 text-xs">
-                              <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                              <span>Nguồn Trích Dẫn Thư Tịch & Sử Liệu Khảo Cứu:</span>
+                          <div key={pIdx} className="p-3.5 my-2.5 rounded-xl bg-amber-950/40 border border-amber-500/40 text-amber-100 text-xs shadow-inner">
+                            <div className="font-bold text-amber-300 flex items-center gap-1.5 mb-2 text-xs uppercase tracking-wider">
+                              <BookOpen className="w-4 h-4 text-amber-400 shrink-0" />
+                              <span>Nguồn Sử Liệu Khảo Cứu & Hồ Sơ Di Tích Chính Thống:</span>
                             </div>
-                            <div className="whitespace-pre-line text-stone-300 font-serif leading-relaxed text-[11px]">
-                              {para.replace(/###\s*📜.*?\n/, '')}
+                            <div className="whitespace-pre-line text-stone-200 font-serif leading-relaxed text-[11px] space-y-1">
+                              {para.replace(/###\s*📜.*?\n?/, '')}
                             </div>
                           </div>
                         );
                       }
                       if (para.startsWith('### ')) {
                         return (
-                          <h4 key={pIdx} className="font-bold text-amber-300 text-xs sm:text-sm mt-3 mb-1 border-b border-stone-800 pb-1">
+                          <h4 key={pIdx} className="font-bold text-amber-300 text-xs sm:text-sm mt-3 mb-1.5 border-b border-stone-800/80 pb-1 flex items-center gap-1.5">
                             {para.replace('### ', '')}
                           </h4>
                         );
                       }
                       return (
-                        <p key={pIdx} className="whitespace-pre-line text-stone-200">
+                        <p key={pIdx} className="whitespace-pre-line text-stone-200 leading-relaxed">
                           {para}
                         </p>
                       );
