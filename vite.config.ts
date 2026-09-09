@@ -5,6 +5,7 @@ import {defineConfig} from 'vite';
 
 export default defineConfig(() => {
   return {
+    base: '/exploreculture/',
     base: '/',
     plugins: [react(), tailwindcss()],
     resolve: {
