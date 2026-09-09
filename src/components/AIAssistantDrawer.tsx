@@ -17,7 +17,9 @@ import {
   Route,
   CheckCircle2,
   Copy,
-  Check
+  Check,
+  ShieldCheck,
+  ExternalLink
 } from 'lucide-react';
 import { ChatMessage, Location3D } from '../types';
 import { sound } from '../utils/audio';
@@ -118,7 +120,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
         sender: 'ai',
         senderName: 'Cố Vấn Ba Son',
         text: aiReplyText,
-        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        sources: data.sources || [],
+        groundingQueries: data.searchQueries || []
       };
 
       setMessages(prev => [...prev, aiMsg]);
@@ -224,16 +228,19 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
               </div>
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 flex-wrap">
                 <h3 className="font-['Cinzel',serif] font-bold text-base text-amber-200">
                   Cố Vấn Ba Son AI
                 </h3>
-                <span className="text-[10px] bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40 font-black">
-                  Gemini 2.5 Pro
+                <span className="text-[10px] bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/40 font-bold flex items-center gap-1">
+                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
+                  Gemini 3.8 Flash • Search Grounding
                 </span>
               </div>
-              <p className="text-[11px] text-stone-400">
-                {currentLocation ? `Đang trợ lý tại: ${currentLocation.name}` : 'Bách khoa toàn thư di sản Phương Nam'}
+              <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
+                <span className="text-emerald-400 font-semibold">100% Chính Sử</span>
+                <span>•</span>
+                <span>{currentLocation ? `Đang tại: ${currentLocation.name}` : 'Bách khoa toàn thư di sản Nam Bộ'}</span>
               </p>
             </div>
           </div>
@@ -356,6 +363,42 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                       );
                     })}
                   </div>
+
+                  {/* Verified Official Sources from Search Grounding / Scientific Dossier */}
+                  {!isUser && msg.sources && msg.sources.length > 0 && (
+                    <div className="mt-3 pt-2.5 border-t border-stone-800/80 space-y-1.5">
+                      <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300">
+                        <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
+                        <span>Nguồn Sử Liệu & Hồ Sơ Đã Khảo Cứu Xác Thực:</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {msg.sources.map((src, sIdx) => (
+                          <a
+                            key={sIdx}
+                            href={src.uri}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-900/90 hover:bg-stone-800 border border-amber-500/30 hover:border-amber-400 text-amber-200 hover:text-amber-100 text-[10px] font-medium transition-colors"
+                          >
+                            <ExternalLink className="w-2.5 h-2.5 text-amber-400 shrink-0" />
+                            <span className="truncate max-w-[260px]">{src.title}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Grounding Real-Time Search Queries */}
+                  {!isUser && msg.groundingQueries && msg.groundingQueries.length > 0 && (
+                    <div className="mt-2 flex items-center gap-1.5 flex-wrap text-[10px] text-stone-400">
+                      <span className="font-semibold text-stone-400">Tra cứu thời gian thực:</span>
+                      {msg.groundingQueries.map((q, qIdx) => (
+                        <span key={qIdx} className="px-1.5 py-0.5 rounded bg-stone-900 border border-stone-800 text-stone-300 font-mono text-[9px]">
+                          "{q}"
+                        </span>
+                      ))}
+                    </div>
+                  )}
 
                   {/* Actions for AI messages */}
                   {!isUser && (

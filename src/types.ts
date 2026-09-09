@@ -231,6 +231,8 @@ export interface ChatMessage {
   locationContext?: string;
   hintLevel?: number;
   sticker?: HeritageSticker;
+  sources?: Array<{ title: string; uri: string }>;
+  groundingQueries?: string[];
 }
 
 export interface RewardItem {

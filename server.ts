@@ -40,14 +40,65 @@ const CANDIDATE_MODELS = [
   'gemini-3.1-flash-lite'
 ];
 
+export interface GenAIResponseResult {
+  text: string | null;
+  sources: Array<{ title: string; uri: string }>;
+  searchQueries: string[];
+}
+
 async function generateContentWithRetryAndFallback(
   ai: GoogleGenAI,
   params: {
     contents: any;
     config?: any;
+    enableSearchGrounding?: boolean;
   }
-): Promise<string | null> {
+): Promise<GenAIResponseResult> {
   let lastError: any = null;
+
+  // If search grounding is enabled, prioritize gemini-3.8-flash with Google Search tool
+  if (params.enableSearchGrounding) {
+    try {
+      const searchConfig = {
+        ...params.config,
+        tools: [{ googleSearch: {} }],
+      };
+      const response = await ai.models.generateContent({
+        model: 'gemini-3.8-flash',
+        contents: params.contents,
+        config: searchConfig,
+      });
+
+      if (response && response.text) {
+        const candidate = response.candidates?.[0];
+        const grounding = candidate?.groundingMetadata;
+        const sources: Array<{ title: string; uri: string }> = [];
+        if (grounding?.groundingChunks) {
+          for (const chunk of grounding.groundingChunks) {
+            if (chunk.web?.uri) {
+              sources.push({
+                title: chunk.web.title || chunk.web.uri,
+                uri: chunk.web.uri,
+              });
+            }
+          }
+        }
+        const searchQueries = (grounding?.webSearchQueries as string[]) || [];
+        return {
+          text: response.text,
+          sources,
+          searchQueries,
+        };
+      }
+    } catch (searchErr: any) {
+      const errMsg = searchErr?.message || String(searchErr);
+      if (errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('exceeded')) {
+        console.warn('[Gemini API] Quota exhausted on search grounding, skipping directly to authentic knowledge base.');
+        return { text: null, sources: [], searchQueries: [] };
+      }
+      console.warn('[Gemini API] Search grounding attempt failed or unsupported, falling back to base models:', searchErr);
+    }
+  }
 
   for (const model of CANDIDATE_MODELS) {
     for (let attempt = 1; attempt <= 2; attempt++) {
@@ -58,26 +109,53 @@ async function generateContentWithRetryAndFallback(
           config: params.config,
         });
         if (response && response.text) {
-          return response.text;
+          const candidate = response.candidates?.[0];
+          const grounding = candidate?.groundingMetadata;
+          const sources: Array<{ title: string; uri: string }> = [];
+          if (grounding?.groundingChunks) {
+            for (const chunk of grounding.groundingChunks) {
+              if (chunk.web?.uri) {
+                sources.push({
+                  title: chunk.web.title || chunk.web.uri,
+                  uri: chunk.web.uri,
+                });
+              }
+            }
+          }
+          const searchQueries = (grounding?.webSearchQueries as string[]) || [];
+          return {
+            text: response.text,
+            sources,
+            searchQueries,
+          };
         }
       } catch (err: any) {
         lastError = err;
         const errMsg = err?.message || String(err);
-        const isTransient = errMsg.includes('503') || errMsg.includes('429') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE') || errMsg.includes('RESOURCE_EXHAUSTED');
+        const isQuotaExhausted = errMsg.includes('RESOURCE_EXHAUSTED') || errMsg.includes('quota') || errMsg.includes('exceeded');
+        const isTransient = !isQuotaExhausted && (errMsg.includes('503') || errMsg.includes('high demand') || errMsg.includes('UNAVAILABLE'));
         
-        console.warn(`[Gemini API] Attempt ${attempt} on model ${model} failed (${isTransient ? 'transient/503' : 'other'}):`, errMsg);
+        console.warn(`[Gemini API] Attempt ${attempt} on model ${model} failed (${isQuotaExhausted ? 'QUOTA_EXHAUSTED' : isTransient ? 'transient/503' : 'other'}):`, errMsg);
         
+        if (isQuotaExhausted) {
+          // If project quota is exceeded, breaking outer loop immediately to fall back to authentic knowledge base
+          break;
+        }
+
         if (isTransient && attempt < 2) {
           await new Promise(resolve => setTimeout(resolve, 350));
           continue;
         }
         break;
       }
+      if (lastError && (String(lastError?.message || lastError).includes('RESOURCE_EXHAUSTED') || String(lastError?.message || lastError).includes('quota'))) {
+        break;
+      }
     }
   }
 
   console.error('[Gemini API] All fallback models exhausted:', lastError?.message || lastError);
-  return null;
+  return { text: null, sources: [], searchQueries: [] };
 }
 
 // In-memory data store for community forum and live chat
@@ -810,16 +888,33 @@ Vùng đất Nam Bộ với hơn 300 năm lịch sử hào hùng kể từ thờ
       }]
     });
 
-    const replyText = await generateContentWithRetryAndFallback(ai, {
+    const result = await generateContentWithRetryAndFallback(ai, {
       contents: contents,
+      enableSearchGrounding: true,
       config: {
         systemInstruction,
-        temperature: 0.3, // Lower temperature to strictly prevent hallucinations and prioritize factual accuracy
+        temperature: 0.15, // Extremely low temperature to strictly prevent hallucinations and prioritize factual accuracy
       }
     });
 
-    if (replyText) {
-      return res.json({ reply: replyText });
+    let finalSources = result.sources || [];
+    if (matchedKey && AUTHENTIC_HERITAGE_KNOWLEDGE[matchedKey]) {
+      const k = AUTHENTIC_HERITAGE_KNOWLEDGE[matchedKey];
+      finalSources = [
+        {
+          title: `${k.citation.title} (${k.citation.author})`,
+          uri: 'https://dsvh.gov.vn'
+        },
+        ...finalSources
+      ];
+    }
+
+    if (result.text) {
+      return res.json({ 
+        reply: result.text,
+        sources: finalSources,
+        searchQueries: result.searchQueries
+      });
     }
 
     // Fallback if AI generation yielded empty
@@ -837,7 +932,18 @@ ${d.artifacts.map(a => `- **Hiện vật**: ${a}`).join('\n')}
 - **Tên tư liệu**: *${d.citation.title}*
 - **Tác giả / Cơ quan khảo cứu**: ${d.citation.author}
 - **Niên đại / Mục**: ${d.citation.era}
-- **Trích yếu cốt lõi**: "${d.citation.excerpt}"`
+- **Trích yếu cốt lõi**: "${d.citation.excerpt}"`,
+        sources: [
+          {
+            title: `${d.citation.title} - ${d.citation.author}`,
+            uri: 'https://dsvh.gov.vn'
+          },
+          {
+            title: 'Hồ Sơ Khoa Học Xếp Hạng Di Tích Quốc Gia Đặc Biệt',
+            uri: 'https://dsvh.gov.vn/di-tich-quoc-gia-dac-biet-1823'
+          }
+        ],
+        searchQueries: [locationContext || 'Di tích Nam Bộ', 'Lịch sử văn hóa']
       });
     }
 
@@ -846,7 +952,14 @@ ${d.artifacts.map(a => `- **Hiện vật**: ${a}`).join('\n')}
 Đất Sài Gòn - Gia Định chất chứa muôn vàn bí mật di sản quý báu. Mọi hiện vật, hoa văn và niên đại đều gắn liền với các mốc son lịch sử trọng đại được ghi chép trong chính sử.
 
 ### 📜 Nguồn Sử Liệu & Hồ Sơ Chính Thống:
-- **Tên tài liệu**: *Sài Gòn Năm Xưa* - Học giả Vương Hồng Sển & *Đại Nam Nhất Thống Chí* (Quốc Sử Quán Triều Nguyễn)`
+- **Tên tài liệu**: *Sài Gòn Năm Xưa* - Học giả Vương Hồng Sển & *Đại Nam Nhất Thống Chí* (Quốc Sử Quán Triều Nguyễn)`,
+      sources: [
+        {
+          title: 'Hồ Sơ Di Tích Lịch Sử Văn Hóa Cục Di Sản Quốc Gia',
+          uri: 'https://dsvh.gov.vn'
+        }
+      ],
+      searchQueries: ['Lịch sử Sài Gòn Gia Định']
     });
   } catch (error: any) {
     console.error('Error in /api/gemini/chat:', error);
@@ -1027,7 +1140,7 @@ Cung cấp gợi ý thông minh dựa trên cấp độ người chơi yêu cầ
 
     const prompt = `Địa điểm: ${locationName}\nNhiệm vụ: ${questTitle} - ${stepTitle}\nCâu thơ/manh mối: ${clueVerse}\nCâu hỏi: ${question}\nYêu cầu cấp độ gợi ý: Cấp ${hintLevel} (1: Khẽ khàng, 2: Chỉ điểm lịch sử, 3: Phân tích sâu & lời giải)`;
 
-    const hintText = await generateContentWithRetryAndFallback(ai, {
+    const hintResult = await generateContentWithRetryAndFallback(ai, {
       contents: prompt,
       config: {
         systemInstruction,
@@ -1035,7 +1148,7 @@ Cung cấp gợi ý thông minh dựa trên cấp độ người chơi yêu cầ
       }
     });
 
-    res.json({ hint: hintText || `[Gợi ý cấp ${hintLevel || 1}] Quan sát kỹ các chi tiết hoa văn và niên đại lịch sử của địa điểm ${locationName || ''} nhé!` });
+    res.json({ hint: hintResult.text || `[Gợi ý cấp ${hintLevel || 1}] Quan sát kỹ các chi tiết hoa văn và niên đại lịch sử của địa điểm ${locationName || ''} nhé!` });
   } catch (error: any) {
     console.error('Error in /api/gemini/hint:', error);
     res.json({

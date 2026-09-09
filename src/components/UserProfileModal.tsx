@@ -40,6 +40,7 @@ import { LOCATIONS } from '../data/locations';
 import { HISTORICAL_THEME_SKINS, getHistoricalSkin } from '../data/historicalThemes';
 import { AI_TOUR_GUIDES } from '../data/aiTourGuides';
 import { sound } from '../utils/audio';
+import { WeeklyEngagementBarChart } from './WeeklyEngagementBarChart';
 import { 
   getLearningMemory, 
   getReviewQuestions, 
@@ -264,41 +265,11 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                 </div>
               </div>
 
-              {/* 7-Day Habit Activity Heatmap */}
-              <div className="p-4 rounded-2xl bg-stone-950 border border-stone-800 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-bold text-stone-300 flex items-center gap-1.5">
-                    <Calendar className="w-4 h-4 text-amber-400" />
-                    Biểu Đồ Thói Quen Học 7 Ngày Qua
-                  </span>
-                  <span className="text-[11px] text-stone-400">
-                    Trung bình: <strong className="text-amber-300">{habits.averageSessionDurationMinutes} phút/buổi</strong>
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-7 gap-2 pt-2">
-                  {habits.weeklyRecords.map((rec, i) => {
-                    const maxMins = 30;
-                    const heightPercent = Math.min(100, Math.max(15, (rec.minutes / maxMins) * 100));
-                    return (
-                      <div key={rec.date || i} className="flex flex-col items-center gap-1.5">
-                        <div className="w-full h-20 bg-stone-900 rounded-xl p-1 flex items-end justify-center relative overflow-hidden border border-stone-800">
-                          <div
-                            className={`w-full rounded-lg transition-all ${
-                              rec.completedGoal
-                                ? 'bg-gradient-to-t from-emerald-600 to-amber-400'
-                                : 'bg-gradient-to-t from-stone-700 to-amber-600/60'
-                            }`}
-                            style={{ height: `${heightPercent}%` }}
-                          />
-                        </div>
-                        <span className="text-[11px] font-bold text-stone-300">{rec.day}</span>
-                        <span className="text-[10px] text-stone-400 font-mono">{rec.minutes}p</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
+              {/* Recharts 7-Day Heritage Engagement & Exploration Bar Chart */}
+              <WeeklyEngagementBarChart 
+                weeklyRecords={habits.weeklyRecords} 
+                dailyGoalMinutes={preferences.dailyStudyGoalMinutes} 
+              />
 
               {/* Learning Style Preferences */}
               <div className="space-y-2">
@@ -499,6 +470,12 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   <p className="text-[10px] text-stone-500">20+ câu mỗi nhiệm vụ</p>
                 </div>
               </div>
+
+              {/* Weekly Engagement & Exploration Bar Chart */}
+              <WeeklyEngagementBarChart 
+                weeklyRecords={habits.weeklyRecords} 
+                dailyGoalMinutes={preferences.dailyStudyGoalMinutes} 
+              />
 
               {/* Quest History Breakdown */}
               <div className="space-y-2">
