@@ -53,11 +53,12 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       text: 'Dạ, kính chào Lữ Khách! Tôi là Ba Son - Cố Vấn Di Sản & Bách Khoa Toàn Thư Phương Nam. Tôi được tối ưu hóa toàn diện để giải đáp MỌI THẮC MẮC của bạn về lịch sử, kiến trúc, văn hóa, cổ vật và hỗ trợ bạn giải mã các câu đố nhiệm vụ hóc búa nhất tại TP.HCM, Bình Dương và Bà Rịa - Vũng Tàu. Bạn muốn khám phá điều gì hôm nay?',
       timestamp: 'Vừa xong',
       suggestedActions: [
-        'Bí mật kết cấu ngầm và thông gió Địa đạo Củ Chi',
-        'Kiến trúc 3 gian 2 chái Nhà Cổ Đốc Phủ Đẩu',
-        'Bí quyết men gốm da chuối Lò Gốm Đại Hưng (Bình Dương)',
-        'Lịch sử ngọn Hải Đăng cổ nhất Vũng Tàu 1862',
-        'Gợi ý lộ trình 1 ngày du ngoạn di sản TP.HCM'
+        'Bí mật kết cấu ngầm và hệ thống bếp Hoàng Cầm Địa đạo Củ Chi',
+        'Ý nghĩa biểu tượng Lưỡng Long Chầu Nguyệt tại Bến Nhà Rồng',
+        'Triết lý chữ Hán phong thủy và hầm tác chiến tại Dinh Độc Lập',
+        'Kiến trúc vòm cuốn thép và bản đồ cổ 1892 tại Bưu Điện Sài Gòn',
+        'Quần thể phù điêu gốm Cây Mai độc bản tại Chùa Bà Thiên Hậu',
+        'Kỷ lục Tượng Phật nằm trên mái chùa dài nhất châu Á (Chùa Hội Khánh)'
       ]
     }
   ]);
@@ -229,7 +230,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   Cố Vấn Ba Son AI
                 </h3>
                 <span className="text-[10px] bg-gradient-to-r from-amber-500/20 to-yellow-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/40 font-black">
-                  Gemini 2.5 Pro
+                  Ba Son AI 3.6 • Trí Tuệ Di Sản
                 </span>
               </div>
               <p className="text-[11px] text-stone-400">

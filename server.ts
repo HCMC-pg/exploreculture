@@ -32,9 +32,9 @@ function getGenAI(): GoogleGenAI | null {
 }
 
 // Resilient Gemini Model Generation with Fallback & Seamless Failover
-// Uses approved Gemini models from @google/genai guidelines
+// gemini-3.6-flash provides cutting-edge knowledge, ultra-fast responses, and comprehensive reasoning
 const CANDIDATE_MODELS = [
-  'gemini-3.8-flash',
+  'gemini-3.6-flash',
   'gemini-flash-latest',
   'gemini-3.1-flash-lite'
 ];
@@ -48,18 +48,24 @@ async function generateContentWithRetryAndFallback(
 ): Promise<string | null> {
   for (const model of CANDIDATE_MODELS) {
     try {
-      const response = await ai.models.generateContent({
+      // 12-second resilient timeout per candidate attempt
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error(`Timeout on ${model}`)), 12000)
+      );
+
+      const responsePromise = ai.models.generateContent({
         model,
         contents: params.contents,
         config: params.config,
       });
+
+      const response: any = await Promise.race([responsePromise, timeoutPromise]);
       if (response && response.text) {
         return response.text;
       }
     } catch (err: any) {
       const errMsg = err?.message || String(err);
-      // Seamlessly switch to the next fallback candidate model when demand is high or transient 503 occurs
-      console.log(`[Gemini API] Switching from ${model} due to temporary model demand, trying alternative model...`);
+      console.log(`[Gemini API] Switching from ${model} due to: ${errMsg}`);
     }
   }
 
@@ -929,12 +935,26 @@ Bạn có thể hỏi Cố Vấn Ba Son về: Kiến trúc sư thiết kế, nă
 
     const contents: any[] = [];
     if (history && Array.isArray(history)) {
-      for (const h of history.slice(-6)) {
+      // Filter out duplicate or empty messages, and exclude the current message to prevent consecutive user turns
+      const validHistory = history.filter(h => h && h.text && String(h.text).trim() !== String(message).trim());
+      
+      for (const h of validHistory) {
+        const role = (h.sender === 'user' || h.role === 'user') ? 'user' : 'model';
+        // Multi-turn conversation in Gemini MUST start with 'user' role
+        if (contents.length === 0 && role !== 'user') continue;
+        // Strictly alternate roles
+        if (contents.length > 0 && contents[contents.length - 1].role === role) continue;
+        
         contents.push({
-          role: h.sender === 'user' ? 'user' : 'model',
-          parts: [{ text: h.text }]
+          role,
+          parts: [{ text: String(h.text).trim() }]
         });
       }
+    }
+
+    // Ensure the last item before the new user prompt is NOT a user turn to avoid consecutive user turns
+    if (contents.length > 0 && contents[contents.length - 1].role === 'user') {
+      contents.pop();
     }
     
     // Inject authentic factual reference if available to guarantee zero hallucination

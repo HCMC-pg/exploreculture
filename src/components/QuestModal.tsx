@@ -113,6 +113,9 @@ export const QuestModal: React.FC<QuestModalProps> = ({
   // Filtered Options with Flashlight Buff (automatically remove 1 wrong option)
   const [filteredWrongOption, setFilteredWrongOption] = useState<string | null>(null);
 
+  // Hidden by default: Ancient Book Clue Verse (Revealed only upon player request)
+  const [isClueVerseRevealed, setIsClueVerseRevealed] = useState<boolean>(false);
+
   // Derive active steps based on tier filter
   const allSteps = quest.steps || [];
   
@@ -171,6 +174,7 @@ export const QuestModal: React.FC<QuestModalProps> = ({
     setAiHintText('');
     setIsHintAccordionOpen(false);
     setShowNoteBox(false);
+    setIsClueVerseRevealed(false);
     setStepStartTime(Date.now());
 
     // Initialize ordering items if ordering puzzle
@@ -686,28 +690,69 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 </div>
               )}
 
-              {/* Cultural Lore & Clue Verse Box */}
+              {/* Cultural Lore & Clue Verse Box - Hidden by default to avoid revealing answers easily */}
               {currentStep.clueVerse && (
-                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-950/30 via-stone-900/60 to-stone-950 border border-amber-500/30 relative overflow-hidden shadow-inner">
-                  <div className="absolute -right-4 -bottom-4 text-amber-500/5">
-                    <BookOpen className="w-24 h-24" />
-                  </div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[11px] font-bold text-amber-400/90 uppercase tracking-widest flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                      📜 Manh Mối Cổ Thư & Thơ Vịnh Nam Bộ:
-                    </p>
-                    <button
-                      onClick={toggleNarration}
-                      className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 underline underline-offset-2"
-                    >
-                      <Volume2 className="w-3 h-3" />
-                      {isAudioNarrating ? 'Tắt đọc thơ' : 'Nghe ngâm thơ'}
-                    </button>
-                  </div>
-                  <p className="font-['Be_Vietnam_Pro',sans-serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-2 border-l-2 border-amber-500/60">
-                    "{currentStep.clueVerse}"
-                  </p>
+                <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-stone-950/90 via-stone-900/60 to-stone-950 p-3 relative overflow-hidden shadow-inner">
+                  {!isClueVerseRevealed ? (
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                          <BookOpen className="w-4 h-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold text-amber-200 font-['Cinzel',serif]">
+                            Manh Mối Cổ Thư & Thơ Vịnh Nam Bộ
+                          </p>
+                          <p className="text-[11px] text-stone-400">
+                            Niêm phong giữ kín đáp án. Chỉ mở khi bạn thực sự cần gợi ý!
+                          </p>
+                        </div>
+                      </div>
+                      <button
+                        onClick={() => {
+                          sound.playDanTranhNote(587.33, 0.8);
+                          setIsClueVerseRevealed(true);
+                        }}
+                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 text-xs font-bold shadow flex items-center gap-1.5 transition-all shrink-0 active:scale-95 cursor-pointer"
+                      >
+                        <span>📜</span>
+                        <span>Mở Niêm Phong</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="relative overflow-hidden space-y-2 animate-fadeIn">
+                      <div className="absolute -right-4 -bottom-4 text-amber-500/5 pointer-events-none">
+                        <BookOpen className="w-24 h-24" />
+                      </div>
+                      <div className="flex items-center justify-between pb-1.5 border-b border-amber-500/20">
+                        <p className="text-[11px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                          <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                          📜 Manh Mối Cổ Thư & Thơ Vịnh Nam Bộ (Đã Mở Niêm Phong):
+                        </p>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={toggleNarration}
+                            className="text-[11px] text-amber-300 hover:text-amber-200 flex items-center gap-1 underline underline-offset-2"
+                          >
+                            <Volume2 className="w-3 h-3" />
+                            {isAudioNarrating ? 'Tắt đọc thơ' : 'Nghe ngâm thơ'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              sound.playDanTranhNote(440, 0.5);
+                              setIsClueVerseRevealed(false);
+                            }}
+                            className="text-[11px] text-stone-400 hover:text-stone-200 px-2 py-0.5 rounded bg-stone-900 border border-stone-700 cursor-pointer"
+                          >
+                            Ẩn lại
+                          </button>
+                        </div>
+                      </div>
+                      <p className="font-['Be_Vietnam_Pro',sans-serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-2 border-l-2 border-amber-500/60">
+                        "{currentStep.clueVerse}"
+                      </p>
+                    </div>
+                  )}
                 </div>
               )}
 

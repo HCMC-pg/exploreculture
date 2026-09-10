@@ -44,6 +44,7 @@ import {
   getLearningMemory, 
   getReviewQuestions, 
   getActiveTravelerBuffs,
+  toggleEquipGear,
   getUserPreferences,
   saveUserPreferences,
   getLearningHabits,
@@ -81,7 +82,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const memory = getLearningMemory();
+  const [memory, setMemory] = useState(() => getLearningMemory());
   const reviewQuestions = getReviewQuestions();
   const buffs = getActiveTravelerBuffs();
 
@@ -496,7 +497,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                   </div>
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {Object.values(memory.questRecords).map(qr => (
+                    {(Object.values(memory.questRecords) as any[]).map((qr: any) => (
                       <div key={qr.questId} className="p-3 rounded-xl bg-stone-950 border border-stone-800 flex items-center justify-between gap-3 text-xs">
                         <div>
                           <p className="font-bold text-stone-200">{qr.title}</p>
@@ -573,26 +574,68 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           {/* TAB 3: EQUIPPED GEAR */}
           {activeTab === 'gear' && (
             <div className="space-y-4 animate-fadeIn">
-              <div className="p-3 rounded-xl bg-stone-950 border border-amber-500/30 text-xs text-stone-300 flex items-center justify-between">
-                <span>Trang bị du hành & cổ phục:</span>
-                <span className="text-[11px] text-amber-400 font-semibold">Tự động kích hoạt hiệu ứng</span>
+              {/* Active Buffs Summary */}
+              <div className="p-3.5 rounded-xl bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-950 border border-amber-500/40 space-y-2">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-bold text-amber-200 flex items-center gap-1.5">
+                    <Zap className="w-4 h-4 text-amber-400" />
+                    Chỉ Số Cường Hóa Đang Hoạt Động ({buffs.equippedCount} món)
+                  </span>
+                  {buffs.hasPhuongNamSet && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500 text-stone-950">
+                      👑 Combo Phương Nam
+                    </span>
+                  )}
+                </div>
+                <div className="flex items-center gap-2 flex-wrap text-[11px]">
+                  {buffs.extraLPPercent > 0 && (
+                    <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold border border-amber-500/30">
+                      +{buffs.extraLPPercent}% LP
+                    </span>
+                  )}
+                  {buffs.extraExpPercent > 0 && (
+                    <span className="px-2 py-0.5 rounded bg-cyan-500/20 text-cyan-300 font-semibold border border-cyan-500/30">
+                      +{buffs.extraExpPercent}% EXP
+                    </span>
+                  )}
+                  {buffs.filterWrongOptionBonus && (
+                    <span className="px-2 py-0.5 rounded bg-yellow-500/20 text-yellow-300 font-semibold border border-yellow-500/30">
+                      🔦 Soi 1 Đáp Án Sai
+                    </span>
+                  )}
+                  {buffs.protectStreakBonus && (
+                    <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 font-semibold border border-emerald-500/30">
+                      🛡️ Bảo Toàn Chuỗi Ngày
+                    </span>
+                  )}
+                </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {(Object.values(memory.equippedGear) as any[]).map((gear: any) => (
                   <div
                     key={gear.id}
-                    className={`p-3.5 rounded-2xl border ${
-                      gear.isEquipped ? 'bg-amber-950/20 border-amber-500/50' : 'bg-stone-950 border-stone-800 opacity-60'
+                    className={`p-3.5 rounded-2xl border transition-all ${
+                      gear.isEquipped ? 'bg-amber-950/20 border-amber-500/50 shadow-md' : 'bg-stone-950 border-stone-800 opacity-70'
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-xs text-amber-200">{gear.name}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                        gear.isEquipped ? 'bg-emerald-500 text-stone-950' : 'bg-stone-800 text-stone-400'
-                      }`}>
-                        {gear.isEquipped ? 'Đang Mặc' : 'Trong Túi'}
+                      <span className="font-bold text-xs text-amber-200 flex items-center gap-1.5">
+                        <span>{gear.category === 'headwear' ? '👒' : gear.category === 'tool' ? '🧭' : gear.category === 'accessory' ? '🧣' : gear.category === 'attire' ? '👘' : '🎒'}</span>
+                        {gear.name}
                       </span>
+                      <button
+                        onClick={() => {
+                          const isNowEquipped = toggleEquipGear(gear.id);
+                          sound.playDanTranhNote(isNowEquipped ? 659.25 : 440, 0.5);
+                          setMemory(getLearningMemory());
+                        }}
+                        className={`text-[10px] px-2 py-0.5 rounded-full font-bold transition-all cursor-pointer ${
+                          gear.isEquipped ? 'bg-emerald-500 text-stone-950 hover:bg-emerald-400' : 'bg-stone-800 text-stone-300 hover:bg-amber-500 hover:text-stone-950'
+                        }`}
+                      >
+                        {gear.isEquipped ? 'Đang Mặc' : 'Mặc Vào'}
+                      </button>
                     </div>
                     <p className="text-[11px] text-amber-400 font-bold flex items-center gap-1">
                       <Zap className="w-3 h-3" />

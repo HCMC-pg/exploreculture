@@ -28,12 +28,16 @@ import {
   Calendar,
   Zap,
   GraduationCap,
-  Volume2
+  Volume2,
+  BarChart3,
+  Lightbulb,
+  FileText
 } from 'lucide-react';
 import { ForumPost, UserProfile, Location3D, DirectMessage, HeritageSticker, TravelerDirectoryUser } from '../types';
 import { INITIAL_FORUM_POSTS } from '../data/forumData';
 import { HERITAGE_STICKERS } from '../data/stickers';
 import { sound } from '../utils/audio';
+import { getLearningMemory, recordPlayerPostCreation } from '../utils/learningStorage';
 
 interface CommunityForumProps {
   user?: UserProfile;
@@ -309,7 +313,49 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
   const [showDmStickerPicker, setShowDmStickerPicker] = useState<boolean>(false);
   const [isRecipientTyping, setIsRecipientTyping] = useState<boolean>(false);
   const [commentReactions, setCommentReactions] = useState<Record<string, { heart: number; coffee: number; photo: number; fire: number }>>({});
-  const [postFriendReactions, setPostFriendReactions] = useState<Record<string, { coffee: number; photo: number; fire: number }>>({});
+  const [postFriendReactions, setPostFriendReactions] = useState<Record<string, { coffee: number; photo: number; fire: number; lightbulb?: number; scroll?: number }>>({});
+
+  // Player Post Progress & Learning Memory
+  const [playerMemory, setPlayerMemory] = useState(() => getLearningMemory());
+
+  // Interactive Heritage Daily Community Poll
+  const [pollVotedOption, setPollVotedOption] = useState<number | null>(() => {
+    try {
+      const saved = localStorage.getItem('saigon_heritage_poll_voted_v2');
+      return saved !== null ? Number(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  const [pollVotes, setPollVotes] = useState<number[]>(() => {
+    try {
+      const saved = localStorage.getItem('saigon_heritage_poll_votes_v2');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [48, 192, 34, 18];
+  });
+
+  const handleVotePoll = (optionIdx: number) => {
+    if (pollVotedOption !== null) return;
+    const isCorrect = optionIdx === 1; // Trường Mỹ Nghệ Biên Hòa
+    if (isCorrect) {
+      sound.playDanTranhNote(784, 0.7);
+      showToast('🎉 Chính xác! Bạn nhận được +20 LP cho câu trả lời đố vui sử học!', 'success');
+    } else {
+      sound.playDanTranhNote(523.25, 0.5);
+      showToast('Đã ghi nhận câu trả lời của bạn! Cùng tìm hiểu thêm sử liệu bên dưới nhé.', 'info');
+    }
+
+    const nextVotes = [...pollVotes];
+    nextVotes[optionIdx] = (nextVotes[optionIdx] || 0) + 1;
+    setPollVotes(nextVotes);
+    setPollVotedOption(optionIdx);
+    try {
+      localStorage.setItem('saigon_heritage_poll_voted_v2', String(optionIdx));
+      localStorage.setItem('saigon_heritage_poll_votes_v2', JSON.stringify(nextVotes));
+    } catch {}
+  };
 
   // Reaction handlers for friendly community banter
   const handleReactToComment = (commentId: string, type: 'heart' | 'coffee' | 'photo' | 'fire') => {
@@ -326,21 +372,23 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     });
   };
 
-  const handleReactToPost = (postId: string, type: 'coffee' | 'photo' | 'fire') => {
-    sound.playClick();
+  const handleReactToPost = (postId: string, type: 'coffee' | 'photo' | 'fire' | 'lightbulb' | 'scroll') => {
+    sound.playDanTranhNote(type === 'scroll' ? 659.25 : type === 'lightbulb' ? 784 : 523.25, 0.4);
     setPostFriendReactions(prev => {
-      const current = prev[postId] || { coffee: 2, photo: 1, fire: 3 };
+      const current = prev[postId] || { coffee: 2, photo: 1, fire: 3, lightbulb: 4, scroll: 2 };
       return {
         ...prev,
         [postId]: {
           ...current,
-          [type]: current[type] + 1
+          [type]: (current[type] || 0) + 1
         }
       };
     });
     showToast(
       type === 'coffee' ? 'Bạn vừa mời một ly cà phê vợt nóng hổi! ☕' :
       type === 'photo' ? 'Đã khen góc ảnh di sản tuyệt đẹp! 📸' :
+      type === 'lightbulb' ? 'Góc nhìn sáng tỏ, mở mang kiến thức! 💡' :
+      type === 'scroll' ? 'Trân trọng sử liệu cổ thư quý giá! 📜' :
       'Đã tán thưởng bài viết đỉnh chóp! 🔥',
       'success'
     );
@@ -676,6 +724,21 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     };
 
     setPosts(prev => [fallbackPost, ...prev]);
+
+    // Record player post progress & award LP/EXP
+    const { earnedLP, earnedExp } = recordPlayerPostCreation(fallbackPost.id);
+    setPlayerMemory(getLearningMemory());
+    showToast(`🎉 Đã lưu bài viết vào tiến trình di sản! +${earnedLP} LP & +${earnedExp} EXP học thuật.`);
+
+    // Persist to backend server API
+    try {
+      fetch('/api/forum/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(fallbackPost)
+      }).catch(() => {});
+    } catch {}
+
     setNewTitle('');
     setNewContent('');
     setNewPostSticker(null);
@@ -711,7 +774,12 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
 
   // Filtered Forum Posts
   const filteredPosts = posts.filter(post => {
-    const matchesCat = selectedCategory === 'all' || post.category === selectedCategory;
+    let matchesCat = true;
+    if (selectedCategory === 'my_posts') {
+      matchesCat = post.authorName === activeUser.name || (playerMemory.myPostIds && playerMemory.myPostIds.includes(post.id));
+    } else if (selectedCategory !== 'all') {
+      matchesCat = post.category === selectedCategory;
+    }
     const matchesSearch = 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -934,6 +1002,162 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
       {/* ================= VIEW 1: FORUM POSTS ================= */}
       {activeTab === 'forum' && (
         <div className="space-y-5">
+          {/* Player Heritage Post Progress & Achievement Banner */}
+          <div className="p-4 rounded-3xl bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-950 border border-amber-500/40 shadow-xl space-y-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-xl shadow-inner">
+                  ✍️
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-bold text-sm text-amber-200">Tiến Trình Đóng Góp Di Sản</h3>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500 text-stone-950 text-[10px] font-black uppercase tracking-wider">
+                      {(playerMemory.postsCreatedCount || 0) >= 6 ? 'Sử Gia Bách Khoa' :
+                       (playerMemory.postsCreatedCount || 0) >= 3 ? 'Cây Bút Khảo Cứu' :
+                       (playerMemory.postsCreatedCount || 0) >= 1 ? 'Nhà Ký Họa Di Sản' : 'Độc Giả Du Hành'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-400 mt-0.5">
+                    Mỗi bài viết đóng góp lưu giữ sử liệu nhận ngay +50 LP và tăng tương tác cùng cộng đồng lữ khách
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    setSelectedCategory(selectedCategory === 'my_posts' ? 'all' : 'my_posts');
+                  }}
+                  className={`min-h-[36px] px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 ${
+                    selectedCategory === 'my_posts'
+                      ? 'bg-amber-500 text-stone-950 shadow-md'
+                      : 'bg-stone-900 border border-amber-500/30 text-amber-300 hover:bg-amber-500/20'
+                  }`}
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Bài Của Tôi ({playerMemory.postsCreatedCount || 0})</span>
+                </button>
+                <button
+                  onClick={() => { sound.playClick(); setIsNewPostModalOpen(true); }}
+                  className="min-h-[36px] px-3.5 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold transition-all flex items-center gap-1"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>Viết Bài (+50 LP)</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 border-t border-stone-800/80 text-xs">
+              <div className="p-2 rounded-xl bg-stone-950/60 border border-stone-800/80">
+                <span className="text-[10px] text-stone-400 block">Bài viết đã đăng:</span>
+                <span className="text-sm font-bold text-amber-300">{playerMemory.postsCreatedCount || 0} bài</span>
+              </div>
+              <div className="p-2 rounded-xl bg-stone-950/60 border border-stone-800/80">
+                <span className="text-[10px] text-stone-400 block">LP học thuật nhận được:</span>
+                <span className="text-sm font-bold text-amber-400">+{((playerMemory.postsCreatedCount || 0) * 50)} LP</span>
+              </div>
+              <div className="p-2 rounded-xl bg-stone-950/60 border border-stone-800/80">
+                <span className="text-[10px] text-stone-400 block">Trang bị kích hoạt buff:</span>
+                <span className="text-sm font-bold text-cyan-400">
+                  {Object.values(playerMemory.equippedGear || {}).filter((g: any) => g.isEquipped).length} món
+                </span>
+              </div>
+              <div className="p-2 rounded-xl bg-stone-950/60 border border-stone-800/80">
+                <span className="text-[10px] text-stone-400 block">Độ uy tín diễn đàn:</span>
+                <span className="text-sm font-bold text-emerald-400">
+                  {(playerMemory.postsCreatedCount || 0) >= 3 ? 'Cấp 3 • Rất Cao' : (playerMemory.postsCreatedCount || 0) >= 1 ? 'Cấp 2 • Tích Cực' : 'Cấp 1 • Mới'}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Interactive Daily Community Poll / Đố Vui Sử Học */}
+          <div className="p-4 rounded-3xl bg-stone-900 border border-amber-500/30 shadow-xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <BarChart3 className="w-4 h-4 text-amber-400" />
+                <h4 className="font-bold text-xs sm:text-sm text-stone-100">
+                  Đố Vui & Thảo Luận Hôm Nay: Phù Điêu Gốm Chợ Bến Thành
+                </h4>
+              </div>
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                Thưởng +20 LP
+              </span>
+            </div>
+            <p className="text-xs text-stone-300">
+              12 bức phù điêu gốm tinh xảo gắn trên 4 cửa Chợ Bến Thành (mô tả cảnh Ngư - Tiều - Canh - Mục và đặc sản phương Nam) do trường mỹ nghệ nào chế tác năm 1952?
+            </p>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              {[
+                { label: 'Gốm Cây Mai (Sài Gòn - Chợ Lớn)', id: 0 },
+                { label: 'Gốm Mỹ Nghệ Biên Hòa (Đồng Nai)', id: 1 },
+                { label: 'Gốm Lái Thiêu (Bình Dương)', id: 2 },
+                { label: 'Gốm Bát Tràng (Hà Nội)', id: 3 }
+              ].map((opt) => {
+                const totalVotes = pollVotes.reduce((a, b) => a + b, 0);
+                const voteCount = pollVotes[opt.id] || 0;
+                const percent = Math.round((voteCount / (totalVotes || 1)) * 100);
+                const isSelected = pollVotedOption === opt.id;
+                const isCorrect = opt.id === 1;
+
+                return (
+                  <button
+                    key={opt.id}
+                    onClick={() => handleVotePoll(opt.id)}
+                    disabled={pollVotedOption !== null}
+                    className={`relative p-3 rounded-2xl text-left text-xs transition-all overflow-hidden border ${
+                      isSelected
+                        ? isCorrect
+                          ? 'bg-emerald-950/50 border-emerald-500 text-emerald-200 shadow-md'
+                          : 'bg-rose-950/40 border-rose-500 text-rose-200'
+                        : pollVotedOption !== null
+                        ? isCorrect
+                          ? 'bg-emerald-950/20 border-emerald-500/40 text-stone-300'
+                          : 'bg-stone-950 border-stone-800 text-stone-400'
+                        : 'bg-stone-950 border-stone-800 hover:border-amber-500/40 hover:bg-stone-800/80 text-stone-200'
+                    }`}
+                  >
+                    {/* Progress Bar background if voted */}
+                    {pollVotedOption !== null && (
+                      <div
+                        className={`absolute left-0 top-0 bottom-0 transition-all duration-700 opacity-20 ${
+                          isCorrect ? 'bg-emerald-500' : 'bg-stone-600'
+                        }`}
+                        style={{ width: `${percent}%` }}
+                      />
+                    )}
+                    <div className="relative z-10 flex items-center justify-between gap-2">
+                      <span className="font-semibold flex items-center gap-1.5">
+                        <span>{isSelected ? (isCorrect ? '✅' : '❌') : pollVotedOption !== null && isCorrect ? '⭐' : '🔘'}</span>
+                        {opt.label}
+                      </span>
+                      {pollVotedOption !== null && (
+                        <span className="font-bold text-[11px] text-stone-300 shrink-0">
+                          {percent}% ({voteCount})
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+
+            {pollVotedOption !== null && (
+              <div className="p-3 rounded-2xl bg-stone-950 border border-emerald-500/30 text-xs text-stone-300 space-y-1 animate-fadeIn">
+                <p className="text-emerald-400 font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-3.5 h-3.5" />
+                  Sử liệu đích thực: Trường Mỹ Nghệ Bản Xứ Biên Hòa (thành lập 1903)
+                </p>
+                <p className="text-[11px] text-stone-400 leading-relaxed">
+                  Năm 1952, các nghệ nhân và giáo viên trường Gốm Biên Hòa đã thiết kế và nung 12 bức phù điêu gốm men màu đặc trưng (men ngọc rạn, xanh đồng trổ bông) gắn trên 4 cửa Đông - Tây - Nam - Bắc của Chợ Bến Thành. Đây là kiệt tác kết hợp gốm mỹ thuật Nam Bộ và kiến trúc công cộng Sài Gòn.
+                </p>
+              </div>
+            )}
+          </div>
+
           {/* Category Filter & Search Bar */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="flex-1 relative w-full">
@@ -951,6 +1175,7 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
             <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 no-scrollbar">
               {[
                 { id: 'all', label: 'Tất Cả' },
+                { id: 'my_posts', label: `Bài Của Tôi (${playerMemory.postsCreatedCount || 0})` },
                 { id: 'hints', label: 'Bí Kíp Mật Thư' },
                 { id: 'history', label: 'Sử Liệu Cố Vấn' },
                 { id: 'cuisine', label: 'Ẩm Thực' },
@@ -1088,6 +1313,24 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                         </button>
 
                         <button
+                          onClick={() => handleReactToPost(post.id, 'lightbulb')}
+                          className="min-h-[34px] flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-yellow-500/20 text-stone-300 hover:text-yellow-300 transition-colors"
+                          title="Góc nhìn sáng tỏ, mở mang kiến thức"
+                        >
+                          <span>💡</span>
+                          <span className="text-[11px] font-semibold">{postFriendReactions[post.id]?.lightbulb || 4}</span>
+                        </button>
+
+                        <button
+                          onClick={() => handleReactToPost(post.id, 'scroll')}
+                          className="min-h-[34px] flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-amber-600/20 text-stone-300 hover:text-amber-300 transition-colors"
+                          title="Trân trọng sử liệu cổ thư quý giá"
+                        >
+                          <span>📜</span>
+                          <span className="text-[11px] font-semibold">{postFriendReactions[post.id]?.scroll || 2}</span>
+                        </button>
+
+                        <button
                           onClick={() => handleReactToPost(post.id, 'fire')}
                           className="min-h-[34px] flex items-center gap-1 px-2 py-1 rounded-xl hover:bg-orange-500/20 text-stone-300 hover:text-orange-400 transition-colors"
                           title="Tán thưởng đỉnh chóp"
@@ -1206,6 +1449,32 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                             </button>
                           </div>
                         )}
+
+                        {/* Quick Comment Suggestion Chips */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-[11px]">
+                          <span className="text-[10px] text-stone-500 shrink-0">Gợi ý nhanh:</span>
+                          {[
+                            '👏 Tư liệu rất giá trị!',
+                            '📜 Cảm ơn sử liệu quý!',
+                            '📍 Mình từng ghé qua đây!',
+                            '💡 Mật thư giải quá hay!'
+                          ].map((chipText, cIdx) => (
+                            <button
+                              key={cIdx}
+                              type="button"
+                              onClick={() => {
+                                sound.playClick();
+                                setCommentInput(prev => ({
+                                  ...prev,
+                                  [post.id]: (prev[post.id] ? `${prev[post.id]} ` : '') + chipText
+                                }));
+                              }}
+                              className="px-2 py-0.5 rounded-lg bg-stone-900 hover:bg-amber-500/20 text-stone-400 hover:text-amber-300 border border-stone-800 shrink-0 transition-colors cursor-pointer"
+                            >
+                              {chipText}
+                            </button>
+                          ))}
+                        </div>
 
                         <div className="flex items-center gap-2">
                           <button

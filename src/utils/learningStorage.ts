@@ -34,7 +34,7 @@ export interface QuestRecord {
 export interface EquippedGearItem {
   id: string;
   name: string;
-  category: 'headwear' | 'tool' | 'bag' | 'accessory' | 'journal' | 'water';
+  category: 'headwear' | 'tool' | 'bag' | 'accessory' | 'journal' | 'water' | 'attire' | 'relic';
   icon: string;
   buffName: string;
   buffDescription: string;
@@ -45,6 +45,8 @@ export interface EquippedGearItem {
   hintSpeedBonus?: boolean;
   filterWrongOptionBonus?: boolean;
   protectStreakBonus?: boolean;
+  criticalLPRate?: number;
+  setPiece?: string;
 }
 
 export interface LearningDailyStreak {
@@ -68,35 +70,110 @@ export interface PlayerLearningMemory {
   equippedGear: Record<string, EquippedGearItem>; // Gear ID -> Gear Item
   studyNotes: Record<string, string>; // stepId -> custom note
   starredQuestions: string[]; // List of stepIds
+  postsCreatedCount?: number; // Total forum posts created by player
+  myPostIds?: string[]; // Forum post IDs created by player
+  totalLikesReceived?: number;
   lastUpdated: string;
 }
 
 const STORAGE_KEY = 'saigon_heritage_learning_memory_v2';
 const INVENTORY_KEY = 'saigon_heritage_equipped_gear_v2';
 
-// Default initial gear unlocked for all heritage travelers
-const DEFAULT_STARTER_GEAR: Record<string, EquippedGearItem> = {
+// Rich initial gear unlocked for all heritage travelers with authentic cultural resonance
+export const DEFAULT_STARTER_GEAR: Record<string, EquippedGearItem> = {
   rew_gear_compass: {
     id: 'rew_gear_compass',
-    name: 'La Bàn Đồng Thau Du Khách Phương Nam',
+    name: 'La Bàn Đồng Thau Du Khách Phương Nam 1862',
     category: 'tool',
     icon: 'Compass',
     buffName: 'Định Hướng Tri Thức',
-    buffDescription: 'Giảm 50% thời gian chờ mở gợi ý AI và tăng độ nhạy quét AR',
+    buffDescription: 'Giảm 50% thời gian chờ mở gợi ý AI và +10% LP khi khám phá',
     acquiredDate: new Date().toLocaleDateString('vi-VN'),
     isEquipped: true,
-    hintSpeedBonus: true
+    bonusLPPercent: 10,
+    hintSpeedBonus: true,
+    setPiece: 'phuong_nam'
   },
   rew_gear_scarf: {
     id: 'rew_gear_scarf',
     name: 'Khăn Rằn Nam Bộ Sợi Bông Dệt Thủ Công',
     category: 'accessory',
     icon: 'Sparkles',
-    buffName: 'Hồn Cốt Nam Bộ',
-    buffDescription: 'Biểu tượng văn hóa phương Nam, tăng +10% EXP cho mỗi nhiệm vụ',
+    buffName: 'Hồn Cốt Phương Nam',
+    buffDescription: 'Tăng +15% EXP cho mỗi câu đố và kích hoạt bộ Khí Phách Lữ Khách',
     acquiredDate: new Date().toLocaleDateString('vi-VN'),
     isEquipped: true,
-    bonusExpPercent: 10
+    bonusExpPercent: 15,
+    setPiece: 'phuong_nam'
+  },
+  rew_gear_bucket_hat: {
+    id: 'rew_gear_bucket_hat',
+    name: 'Nón Tai Bèo Thám Hiểm Rừng Sác UPF 50+',
+    category: 'headwear',
+    icon: 'Crown',
+    buffName: 'Bền Lòng Thám Hiểm',
+    buffDescription: 'Tăng +15% EXP và kích hoạt khiên bảo vệ chuỗi ngày streak',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    bonusExpPercent: 15,
+    protectStreakBonus: true,
+    setPiece: 'phuong_nam'
+  },
+  rew_gear_flashlight: {
+    id: 'rew_gear_flashlight',
+    name: 'Đèn Pin Thấu Kính Địa Đạo Củ Chi',
+    category: 'tool',
+    icon: 'Flashlight',
+    buffName: 'Rọi Sáng Địa Đạo',
+    buffDescription: 'Tự động soi rọi và loại bỏ 1 phương án sai trong câu đố trắc nghiệm',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    filterWrongOptionBonus: true
+  },
+  rew_gear_magnifier: {
+    id: 'rew_gear_magnifier',
+    name: 'Kính Lúp Khảo Cổ Hoa Sen Đồng',
+    category: 'tool',
+    icon: 'Search',
+    buffName: 'Nhãn Quan Sử Gia',
+    buffDescription: 'Tăng +20% LP thưởng khi giải đúng câu đố ngay từ lần thử đầu tiên',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    bonusLPPercent: 20
+  },
+  rew_gear_ba_ba: {
+    id: 'rew_gear_ba_ba',
+    name: 'Áo Bà Ba Lụa Tân Châu Truyền Thống',
+    category: 'attire',
+    icon: 'Shirt',
+    buffName: 'Phong Thái Nam Bộ',
+    buffDescription: 'Tăng +25% EXP học thuật và 25% tỷ lệ nhận LP bạo kích (Critical LP)',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    bonusExpPercent: 25,
+    criticalLPRate: 25
+  },
+  rew_gear_tumbler: {
+    id: 'rew_gear_tumbler',
+    name: 'Bình Giữ Nhiệt Lữ Khách 1892',
+    category: 'water',
+    icon: 'Coffee',
+    buffName: 'Sức Bền Hành Trình',
+    buffDescription: 'Tăng +12% LP cho mọi trạm khảo cứu và duy trì năng lượng dẻo dai',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: false,
+    bonusLPPercent: 12
+  },
+  rew_gear_seal: {
+    id: 'rew_gear_seal',
+    name: 'Kỳ Lân Ấn Chương Cố Vấn Ba Son',
+    category: 'relic',
+    icon: 'Award',
+    buffName: 'Ấn Tín Bách Khoa',
+    buffDescription: 'Tăng +30% LP toàn bộ di tích và tỏa vầng hào quang Học Giả Phương Nam',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: false,
+    bonusLPPercent: 30
   }
 };
 
@@ -109,6 +186,17 @@ export const getLearningMemory = (): PlayerLearningMemory => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed: PlayerLearningMemory = JSON.parse(raw);
+      // Ensure all upgraded wardrobe gear is merged so players immediately receive new buffs
+      parsed.equippedGear = {
+        ...DEFAULT_STARTER_GEAR,
+        ...(parsed.equippedGear || {})
+      };
+      if (parsed.postsCreatedCount === undefined) {
+        parsed.postsCreatedCount = 0;
+      }
+      if (!Array.isArray(parsed.myPostIds)) {
+        parsed.myPostIds = [];
+      }
       return parsed;
     }
   } catch (err) {
@@ -133,6 +221,9 @@ export const getLearningMemory = (): PlayerLearningMemory => {
       streakFreezeTokens: 2
     },
     equippedGear: DEFAULT_STARTER_GEAR,
+    postsCreatedCount: 0,
+    myPostIds: [],
+    totalLikesReceived: 12,
     studyNotes: {},
     starredQuestions: [],
     lastUpdated: new Date().toISOString()
@@ -360,17 +451,67 @@ export const addGearToInventory = (gear: EquippedGearItem): void => {
   saveLearningMemory(memory);
 };
 
-// Get current active Traveler Buffs
+// Equip all optimal gear at once
+export const equipAllOptimalGear = (): void => {
+  const memory = getLearningMemory();
+  Object.keys(memory.equippedGear).forEach(id => {
+    memory.equippedGear[id].isEquipped = true;
+  });
+  saveLearningMemory(memory);
+};
+
+// Unequip all gear
+export const unequipAllGear = (): void => {
+  const memory = getLearningMemory();
+  Object.keys(memory.equippedGear).forEach(id => {
+    memory.equippedGear[id].isEquipped = false;
+  });
+  saveLearningMemory(memory);
+};
+
+// Record user post creation, awards LP & EXP, and tracks in memory
+export const recordPlayerPostCreation = (postId: string): { totalPosts: number; earnedLP: number; earnedExp: number } => {
+  const memory = getLearningMemory();
+  const currentCount = memory.postsCreatedCount || 0;
+  const currentPosts = memory.myPostIds || [];
+  
+  memory.postsCreatedCount = currentCount + 1;
+  if (!currentPosts.includes(postId)) {
+    memory.myPostIds = [postId, ...currentPosts];
+  }
+  memory.lastUpdated = new Date().toISOString();
+  saveLearningMemory(memory);
+
+  return {
+    totalPosts: memory.postsCreatedCount,
+    earnedLP: 50,
+    earnedExp: 35
+  };
+};
+
+// Get current active Traveler Buffs with Synergy Sets
 export const getActiveTravelerBuffs = () => {
   const memory = getLearningMemory();
   const equipped = Object.values(memory.equippedGear).filter(g => g.isEquipped);
 
+  // Check Set Synergy: Bộ Lữ Khách Phương Nam (La Bàn + Khăn Rằn + Nón Tai Bèo)
+  const hasPhuongNamSet = 
+    equipped.some(g => g.id === 'rew_gear_compass') &&
+    equipped.some(g => g.id === 'rew_gear_scarf') &&
+    equipped.some(g => g.id === 'rew_gear_bucket_hat');
+
+  const baseExtraLP = equipped.reduce((acc, g) => acc + (g.bonusLPPercent || 0), 0);
+  const baseExtraExp = equipped.reduce((acc, g) => acc + (g.bonusExpPercent || 0), 0);
+
   return {
-    extraLPPercent: equipped.reduce((acc, g) => acc + (g.bonusLPPercent || 0), 0),
-    extraExpPercent: equipped.reduce((acc, g) => acc + (g.bonusExpPercent || 0), 0),
+    extraLPPercent: baseExtraLP + (hasPhuongNamSet ? 15 : 0),
+    extraExpPercent: baseExtraExp + (hasPhuongNamSet ? 15 : 0),
     hintSpeedBonus: equipped.some(g => g.hintSpeedBonus),
     filterWrongOptionBonus: equipped.some(g => g.filterWrongOptionBonus),
-    protectStreakBonus: equipped.some(g => g.protectStreakBonus),
+    protectStreakBonus: equipped.some(g => g.protectStreakBonus) || hasPhuongNamSet,
+    criticalLPRate: equipped.reduce((acc, g) => acc + (g.criticalLPRate || 0), 0),
+    hasPhuongNamSet,
+    setSynergyName: hasPhuongNamSet ? 'Khí Phách Lữ Khách Phương Nam (+15% LP/EXP, Giữ Chuỗi)' : undefined,
     equippedCount: equipped.length,
     equippedItems: equipped
   };

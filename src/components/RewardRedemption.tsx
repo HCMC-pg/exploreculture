@@ -42,6 +42,8 @@ import {
   toggleEquipGear, 
   addGearToInventory, 
   getActiveTravelerBuffs,
+  equipAllOptimalGear,
+  unequipAllGear,
   EquippedGearItem 
 } from '../utils/learningStorage';
 
@@ -752,25 +754,123 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
       {/* 🎒 TAB 3: INVENTORY & ACTIVE BUFFS */}
       {activeTab === 'inventory' && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Active Buffs Summary */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-900 border border-amber-500/30 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                <Zap className="w-5 h-5" />
+          {/* Synergy Set Banner if Active */}
+          {activeBuffs.hasPhuongNamSet && (
+            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500/20 via-yellow-500/20 to-amber-600/20 border-2 border-amber-400/60 shadow-xl flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/30 border border-amber-400/50 flex items-center justify-center text-amber-300 text-xl shadow-inner">
+                  👑
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-amber-400 text-stone-950 font-['Cinzel',serif]">
+                      COMBO BỘ TRANG PHỤC KÍCH HOẠT
+                    </span>
+                    <span className="text-xs text-amber-300 font-bold">★ ★ ★ ★ ★</span>
+                  </div>
+                  <h3 className="text-base font-bold text-amber-100 font-['Cinzel',serif] mt-0.5">
+                    Bộ Ba Di Sản Phương Nam: Khí Phách Lữ Khách
+                  </h3>
+                  <p className="text-xs text-stone-300">
+                    Kích hoạt khi mang đủ: <strong>La Bàn 1862 + Khăn Rằn + Nón Tai Bèo</strong>. Thưởng thêm <strong>+15% LP & +15% EXP</strong> và <strong>Bảo Toàn Chuỗi Ngày Khảo Cứu</strong>!
+                  </p>
+                </div>
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-amber-200">
-                  Hiệu Ứng Trang Bị Đang Kích Hoạt ({activeBuffs.equippedCount} món)
-                </h4>
-                <p className="text-xs text-stone-400">
-                  {activeBuffs.extraLPPercent > 0 && `+${activeBuffs.extraLPPercent}% LP • `}
-                  {activeBuffs.extraExpPercent > 0 && `+${activeBuffs.extraExpPercent}% EXP • `}
-                  Trang bị du hành tăng cường năng lực giải mã di sản
-                </p>
+              <div className="px-3 py-1.5 rounded-xl bg-amber-950/80 border border-amber-500/40 text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                <Sparkles className="w-4 h-4 text-amber-400 animate-spin" />
+                <span>Buff Đang Hoạt Động</span>
               </div>
+            </div>
+          )}
+
+          {/* Active Buffs Summary Bar with Glowing Chips */}
+          <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-900 border border-amber-500/30 shadow-lg space-y-3">
+            <div className="flex items-center justify-between flex-wrap gap-4">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner">
+                  <Zap className="w-6 h-6 text-amber-400" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-amber-200">
+                      Chỉ Số Buff Đang Hoạt Động ({activeBuffs.equippedCount} món trang bị)
+                    </h4>
+                    {activeBuffs.equippedCount > 0 && (
+                      <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        Đang Cường Hóa
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-stone-400">
+                    Trang bị du hành tăng tốc độ khảo cứu, loại trừ đáp án sai và gia tăng điểm LP & EXP
+                  </p>
+                </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => {
+                    sound.playSuccess();
+                    equipAllOptimalGear();
+                    setEquippedMemory(getLearningMemory());
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 text-xs font-bold shadow flex items-center gap-1.5 transition-all cursor-pointer"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  Mặc Nhanh Tối Ưu
+                </button>
+                <button
+                  onClick={() => {
+                    sound.playClick();
+                    unequipAllGear();
+                    setEquippedMemory(getLearningMemory());
+                  }}
+                  className="px-3 py-1.5 rounded-xl bg-stone-800 hover:bg-stone-700 text-stone-300 text-xs font-semibold border border-stone-700 transition-all cursor-pointer"
+                >
+                  Tháo Toàn Bộ
+                </button>
+              </div>
+            </div>
+
+            {/* Glowing Active Buff Pills */}
+            <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-stone-800">
+              {activeBuffs.extraLPPercent > 0 && (
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-amber-500/20 text-amber-300 border border-amber-500/40 flex items-center gap-1.5">
+                  <Award className="w-3.5 h-3.5 text-amber-400" />
+                  +{activeBuffs.extraLPPercent}% LP Thưởng
+                </span>
+              )}
+              {activeBuffs.extraExpPercent > 0 && (
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-cyan-500/20 text-cyan-300 border border-cyan-500/40 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-cyan-400" />
+                  +{activeBuffs.extraExpPercent}% EXP Thưởng
+                </span>
+              )}
+              {activeBuffs.filterWrongOptionBonus && (
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-yellow-500/20 text-yellow-300 border border-yellow-500/40 flex items-center gap-1.5">
+                  🔦 Đèn Pin Củ Chi (Soi 1 Phương Án Sai)
+                </span>
+              )}
+              {activeBuffs.protectStreakBonus && (
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 flex items-center gap-1.5">
+                  🛡️ Khiên Giữ Chuỗi Ngày Khảo Cứu
+                </span>
+              )}
+              {activeBuffs.hintSpeedBonus && (
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/40 flex items-center gap-1.5">
+                  ⚡ Mở Gợi Ý AI Nhanh 50%
+                </span>
+              )}
+              {Boolean(activeBuffs.criticalLPRate) && (
+                <span className="text-xs font-bold px-3 py-1 rounded-lg bg-rose-500/20 text-rose-300 border border-rose-500/40 flex items-center gap-1.5">
+                  💥 +{activeBuffs.criticalLPRate}% Tỉ Lệ Bạo Kích LP
+                </span>
+              )}
             </div>
           </div>
 
+          {/* Grid of Wardrobe Gear Items */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {(Object.values(equippedMemory.equippedGear) as EquippedGearItem[]).map((gear: EquippedGearItem) => (
               <div
@@ -778,20 +878,36 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                 className={`p-5 rounded-2xl border transition-all ${
                   gear.isEquipped
                     ? 'bg-amber-950/20 border-amber-500/60 shadow-lg ring-1 ring-amber-500/30'
-                    : 'bg-stone-900 border-stone-800 opacity-75'
+                    : 'bg-stone-900 border-stone-800 opacity-85 hover:opacity-100'
                 }`}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                    <Compass className="w-6 h-6" />
-                  </div>
-                  <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
-                    gear.isEquipped 
-                      ? 'bg-emerald-500 text-stone-950' 
-                      : 'bg-stone-800 text-stone-400'
+                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md ${
+                    gear.isEquipped
+                      ? 'bg-gradient-to-br from-amber-500/30 to-amber-600/20 border border-amber-500/50 text-amber-300'
+                      : 'bg-stone-800 border border-stone-700 text-stone-400'
                   }`}>
-                    {gear.isEquipped ? 'Đang Mặc' : 'Trong Túi'}
-                  </span>
+                    {gear.category === 'headwear' ? '👒' :
+                     gear.category === 'tool' ? '🧭' :
+                     gear.category === 'accessory' ? '🧣' :
+                     gear.category === 'attire' ? '👘' :
+                     gear.category === 'water' ? '🏺' :
+                     gear.category === 'relic' ? '👑' : '🎒'}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    {gear.setPiece && (
+                      <span className="text-[9px] uppercase font-bold px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30">
+                        Set Phương Nam
+                      </span>
+                    )}
+                    <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
+                      gear.isEquipped 
+                        ? 'bg-emerald-500 text-stone-950' 
+                        : 'bg-stone-800 text-stone-400'
+                    }`}>
+                      {gear.isEquipped ? 'Đang Mặc' : 'Trong Túi'}
+                    </span>
+                  </div>
                 </div>
 
                 <h4 className="font-bold text-amber-100 text-sm mb-1">{gear.name}</h4>
@@ -806,8 +922,15 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                 <div className="flex items-center justify-between pt-2 border-t border-stone-800 text-xs">
                   <span className="text-stone-500 text-[10px]">Ngày nhận: {gear.acquiredDate}</span>
                   <button
-                    onClick={() => handleToggleEquip(gear.id)}
-                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
+                    onClick={() => {
+                      if (!gear.isEquipped) {
+                        sound.playDanTranhNote(659.25, 0.6);
+                      } else {
+                        sound.playClick();
+                      }
+                      handleToggleEquip(gear.id);
+                    }}
+                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all cursor-pointer ${
                       gear.isEquipped
                         ? 'bg-stone-800 text-stone-300 hover:bg-stone-700'
                         : 'bg-amber-500 text-stone-950 hover:bg-amber-400 shadow'
