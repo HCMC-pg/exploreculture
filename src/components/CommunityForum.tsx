@@ -28,12 +28,23 @@ import {
   Calendar,
   Zap,
   GraduationCap,
-  Volume2
+  Volume2,
+  Bookmark
 } from 'lucide-react';
 import { ForumPost, UserProfile, Location3D, DirectMessage, HeritageSticker, TravelerDirectoryUser } from '../types';
 import { INITIAL_FORUM_POSTS } from '../data/forumData';
 import { HERITAGE_STICKERS } from '../data/stickers';
 import { sound } from '../utils/audio';
+
+export interface PlayerForumProgress {
+  totalPostsCreated: number;
+  totalLikesReceived: number;
+  totalCommentsReceived: number;
+  reputationScore: number;
+  authorRank: string;
+  createdPostIds: string[];
+  bookmarkedPostIds: string[];
+}
 
 interface CommunityForumProps {
   user?: UserProfile;
@@ -175,6 +186,51 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
 
   // Inspect Traveler Passport Modal
   const [inspectTraveler, setInspectTraveler] = useState<TravelerDirectoryUser | null>(null);
+
+  // Player Post Progress & Author Ranking State with LocalStorage Persistence
+  const [playerProgress, setPlayerProgress] = useState<PlayerForumProgress>(() => {
+    try {
+      const saved = localStorage.getItem('saigon_player_forum_progress_v2');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return {
+      totalPostsCreated: 1,
+      totalLikesReceived: 6,
+      totalCommentsReceived: 4,
+      reputationScore: 160,
+      authorRank: 'Bút Ký Tập Sự',
+      createdPostIds: [],
+      bookmarkedPostIds: []
+    };
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('saigon_player_forum_progress_v2', JSON.stringify(playerProgress));
+    } catch {}
+  }, [playerProgress]);
+
+  const handleToggleBookmark = (postId: string) => {
+    sound.playClick();
+    setPlayerProgress(prev => {
+      const isBookmarked = prev.bookmarkedPostIds.includes(postId);
+      const updated = isBookmarked
+        ? prev.bookmarkedPostIds.filter(id => id !== postId)
+        : [...prev.bookmarkedPostIds, postId];
+      return {
+        ...prev,
+        bookmarkedPostIds: updated
+      };
+    });
+  };
+
+  // Quick Comment Preset
+  const handleQuickComment = (postId: string, text: string) => {
+    setCommentInput(prev => ({
+      ...prev,
+      [postId]: prev[postId] ? `${prev[postId]} ${text}` : text
+    }));
+  };
 
   // Forum State with LocalStorage Persistence
   const [posts, setPosts] = useState<ForumPost[]>(() => {
@@ -338,10 +394,17 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
         }
       };
     });
+
+    // Reward player interaction reputation score
+    setPlayerProgress(prev => ({
+      ...prev,
+      reputationScore: prev.reputationScore + 5
+    }));
+
     showToast(
-      type === 'coffee' ? 'Bạn vừa mời một ly cà phê vợt nóng hổi! ☕' :
-      type === 'photo' ? 'Đã khen góc ảnh di sản tuyệt đẹp! 📸' :
-      'Đã tán thưởng bài viết đỉnh chóp! 🔥',
+      type === 'coffee' ? 'Bạn vừa mời một ly cà phê vợt nóng hổi! ☕ (+5 Uy Danh)' :
+      type === 'photo' ? 'Đã khen góc ảnh di sản tuyệt đẹp! 📸 (+5 Uy Danh)' :
+      'Đã tán thưởng bài viết đỉnh chóp! 🔥 (+5 Uy Danh)',
       'success'
     );
   };
@@ -659,8 +722,9 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     if (!newTitle.trim() || !newContent.trim()) return;
 
     sound.playSuccess();
+    const newPostId = `post_${Date.now()}`;
     const fallbackPost: ForumPost = {
-      id: `post_${Date.now()}`,
+      id: newPostId,
       title: newTitle,
       content: newContent,
       category: newCategory,
@@ -676,42 +740,125 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     };
 
     setPosts(prev => [fallbackPost, ...prev]);
+    
+    // Update player's post progress tracking & author rank
+    setPlayerProgress(prev => {
+      const updatedTotal = prev.totalPostsCreated + 1;
+      let newRank = 'Bút Ký Tập Sự';
+      if (updatedTotal >= 8) newRank = 'Viện Sĩ Sử Ký Nam Bộ';
+      else if (updatedTotal >= 4) newRank = 'Nhà Biên Niên Nam Bộ';
+      else if (updatedTotal >= 2) newRank = 'Ký Giả Đô Thành';
+
+      return {
+        ...prev,
+        totalPostsCreated: updatedTotal,
+        reputationScore: prev.reputationScore + 50,
+        authorRank: newRank,
+        createdPostIds: [newPostId, ...prev.createdPostIds]
+      };
+    });
+
+    // Save to server endpoint asynchronously
+    fetch('/api/forum/posts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        title: newTitle,
+        authorName: activeUser.name,
+        authorAvatar: activeUser.avatar,
+        authorTitle: activeUser.title,
+        category: newCategory,
+        content: newContent,
+        locationTag: newLocationTag || ''
+      })
+    }).catch(() => {});
+
     setNewTitle('');
     setNewContent('');
     setNewPostSticker(null);
     setIsNewPostModalOpen(false);
 
-    // Dynamic community encouragement reply simulation after 3s
+    // Wave 1: Ba Son AI Academic Advisor interactive scholarly comment after 2.2s
+    setTimeout(() => {
+      const basonComments = [
+        `Góc nhìn khảo luận rất sâu sắc về di sản phương Nam! Thư tịch cổ ghi nhận dấu ấn kiến trúc này đặc biệt đậm nét tại Sài Gòn - Gia Định thế kỷ 19. Cố vấn Ba Son ghi nhận +50 Điểm Uy Danh cho lữ khách! 📜✨`,
+        `Một ghi chép thực địa xuất sắc! Cố vấn Ba Son rất ấn tượng trước phát hiện tinh tế của lữ khách @${activeUser.name}. Hãy tiếp tục hành trình gìn giữ văn hóa bến cảng và đô thành nhé! ⚓🏛️`,
+        `Thảo luận rất có giá trị học thuật! Các dữ liệu bạn vừa chia sẻ khớp với niên biểu Nam Kỳ thực lục. Chúc ngọn lửa khảo cứu trong bạn luôn bừng sáng! 🧭💡`
+      ];
+      const randomBasonReply = basonComments[Math.floor(Math.random() * basonComments.length)];
+
+      const baSonComment = {
+        id: `comment_bason_${Date.now()}`,
+        authorName: 'Cố Vấn Ba Son (AI Học Thuật)',
+        authorAvatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80',
+        authorTitle: 'Cố Vấn Di Sản Phương Nam',
+        content: randomBasonReply,
+        sticker: HERITAGE_STICKERS[0],
+        timestamp: 'Vừa xong',
+        likes: 4
+      };
+
+      setPosts(curr => curr.map((p) => {
+        if (p.id === newPostId) {
+          return {
+            ...p,
+            likes: p.likes + 2,
+            commentsCount: p.commentsCount + 1,
+            comments: [baSonComment, ...p.comments]
+          };
+        }
+        return p;
+      }));
+      sound.playSuccess();
+    }, 2200);
+
+    // Wave 2: Fellow scholar interactive community encouragement after 4.5s
     setTimeout(() => {
       const cheerComment = {
         id: `comment_cheer_${Date.now()}`,
         authorName: 'Trần Văn Kiệt',
         authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80',
         authorTitle: 'Nhà Thám Hiểm Trẻ',
-        content: `Bài viết rất giá trị và đầy cảm hứng! Chúc bạn @${activeUser.name} sớm thu thập đủ 21 huy hiệu di sản nhé! 🔥`,
-        sticker: HERITAGE_STICKERS[0],
+        content: `Đọc bài của bạn @${activeUser.name} làm mình muốn xách ba lô đi khám phá ngay! Mình vừa ghim vào Cẩm Nang và tặng bạn 1 ly cà phê vợt nóng hổi nhé! ☕🔥`,
+        sticker: HERITAGE_STICKERS[1] || HERITAGE_STICKERS[0],
         timestamp: 'Vừa xong',
-        likes: 2
+        likes: 3
       };
 
-      setPosts(curr => curr.map((p, idx) => {
-        if (idx === 0) {
+      setPosts(curr => curr.map((p) => {
+        if (p.id === newPostId) {
           return {
             ...p,
-            likes: p.likes + 2,
+            likes: p.likes + 3,
             commentsCount: p.commentsCount + 1,
             comments: [cheerComment, ...p.comments]
           };
         }
         return p;
       }));
-      sound.playSuccess();
-    }, 3200);
+
+      setPlayerProgress(prev => ({
+        ...prev,
+        totalLikesReceived: prev.totalLikesReceived + 5,
+        totalCommentsReceived: prev.totalCommentsReceived + 2,
+        reputationScore: prev.reputationScore + 30
+      }));
+
+      sound.playDanTranhNote(659.25, 0.4);
+    }, 4500);
   };
 
-  // Filtered Forum Posts
+  // Filtered Forum Posts with Player Post & Bookmark Filters
   const filteredPosts = posts.filter(post => {
-    const matchesCat = selectedCategory === 'all' || post.category === selectedCategory;
+    let matchesCat = true;
+    if (selectedCategory === 'my_posts') {
+      matchesCat = post.authorName === activeUser.name || playerProgress.createdPostIds.includes(post.id);
+    } else if (selectedCategory === 'bookmarked') {
+      matchesCat = playerProgress.bookmarkedPostIds.includes(post.id);
+    } else if (selectedCategory !== 'all') {
+      matchesCat = post.category === selectedCategory;
+    }
+
     const matchesSearch = 
       post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       post.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -934,6 +1081,119 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
       {/* ================= VIEW 1: FORUM POSTS ================= */}
       {activeTab === 'forum' && (
         <div className="space-y-5">
+          {/* 🌟 AUTHOR PROGRESS & POSTING STATS MASTER BANNER */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900 to-amber-950/40 border border-amber-500/30 shadow-2xl relative overflow-hidden space-y-4">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-amber-500/5 rounded-full blur-3xl pointer-events-none" />
+            
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 relative z-10">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-2xl shadow-inner shrink-0">
+                  📜
+                </div>
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400/90 bg-amber-500/10 px-2.5 py-0.5 rounded-full border border-amber-500/20">
+                      Tiến Trình Cây Bút Di Sản
+                    </span>
+                    <span className="px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-amber-400 text-stone-950 text-[11px] font-black flex items-center gap-1 shadow-sm">
+                      <GraduationCap className="w-3.5 h-3.5" />
+                      <span>{playerProgress.authorRank}</span>
+                    </span>
+                  </div>
+                  <h3 className="font-bold text-base sm:text-lg text-stone-100 mt-1">
+                    Hồ Sơ Tác Giả & Tương Tác Diễn Đàn
+                  </h3>
+                </div>
+              </div>
+
+              {/* Quick Filter Buttons */}
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => { sound.playClick(); setSelectedCategory('my_posts'); }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                    selectedCategory === 'my_posts'
+                      ? 'bg-amber-500 text-stone-950 shadow-md'
+                      : 'bg-stone-950/80 border border-stone-800 text-stone-300 hover:text-amber-300'
+                  }`}
+                >
+                  <span>✍️ Bài Của Tôi</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-stone-900/60 text-[10px]">
+                    {playerProgress.totalPostsCreated}
+                  </span>
+                </button>
+
+                <button
+                  onClick={() => { sound.playClick(); setSelectedCategory('bookmarked'); }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition-all ${
+                    selectedCategory === 'bookmarked'
+                      ? 'bg-amber-500 text-stone-950 shadow-md'
+                      : 'bg-stone-950/80 border border-stone-800 text-stone-300 hover:text-amber-300'
+                  }`}
+                >
+                  <Bookmark className="w-3.5 h-3.5" />
+                  <span>Cẩm Nang Đã Lưu</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-stone-900/60 text-[10px]">
+                    {playerProgress.bookmarkedPostIds.length}
+                  </span>
+                </button>
+              </div>
+            </div>
+
+            {/* Metric Counters Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1 relative z-10">
+              <div className="p-3 rounded-2xl bg-stone-950/60 border border-stone-800/80">
+                <p className="text-[10px] text-stone-400 flex items-center gap-1">
+                  <BookOpen className="w-3 h-3 text-amber-400" />
+                  <span>Bài Đã Viết</span>
+                </p>
+                <p className="text-lg font-black text-amber-300 mt-0.5">
+                  {playerProgress.totalPostsCreated} <span className="text-[11px] font-normal text-stone-400">bài</span>
+                </p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-stone-950/60 border border-stone-800/80">
+                <p className="text-[10px] text-stone-400 flex items-center gap-1">
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>Điểm Uy Danh</span>
+                </p>
+                <p className="text-lg font-black text-amber-300 mt-0.5">
+                  {playerProgress.reputationScore} <span className="text-[11px] font-normal text-stone-400">pts</span>
+                </p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-stone-950/60 border border-stone-800/80">
+                <p className="text-[10px] text-stone-400 flex items-center gap-1">
+                  <Heart className="w-3 h-3 text-rose-400" />
+                  <span>Lượt Thích Nhận</span>
+                </p>
+                <p className="text-lg font-black text-rose-300 mt-0.5">
+                  {playerProgress.totalLikesReceived} <span className="text-[11px] font-normal text-stone-400">tim</span>
+                </p>
+              </div>
+
+              <div className="p-3 rounded-2xl bg-stone-950/60 border border-stone-800/80">
+                <p className="text-[10px] text-stone-400 flex items-center gap-1">
+                  <MessageCircle className="w-3 h-3 text-blue-400" />
+                  <span>Phản Hồi Nhận</span>
+                </p>
+                <p className="text-lg font-black text-blue-300 mt-0.5">
+                  {playerProgress.totalCommentsReceived} <span className="text-[11px] font-normal text-stone-400">lời bình</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Rank Evolution Milestone Bar */}
+            <div className="p-2.5 rounded-2xl bg-stone-950/40 border border-stone-800/60 text-xs text-stone-300 flex items-center justify-between flex-wrap gap-2">
+              <span className="text-[11px] text-stone-400">
+                Mốc thăng cấp: {playerProgress.totalPostsCreated >= 8 ? 'Đạt cấp Viện Sĩ Tối Cao' : `Cần thêm ${Math.max(1, (playerProgress.totalPostsCreated < 2 ? 2 : playerProgress.totalPostsCreated < 4 ? 4 : 8) - playerProgress.totalPostsCreated)} bài viết để thăng hạng`}
+              </span>
+              <span className="text-[11px] text-amber-400 font-semibold flex items-center gap-1">
+                <Zap className="w-3 h-3 text-amber-400" />
+                Mỗi bài viết được Cố Vấn Ba Son & bạn bè phản hồi tự động (+80 Uy Danh)
+              </span>
+            </div>
+          </div>
+
           {/* Category Filter & Search Bar */}
           <div className="flex flex-col sm:flex-row items-center gap-3">
             <div className="flex-1 relative w-full">
@@ -951,6 +1211,8 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
             <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto pb-1 sm:pb-0 no-scrollbar">
               {[
                 { id: 'all', label: 'Tất Cả' },
+                { id: 'my_posts', label: '✍️ Bài Của Tôi' },
+                { id: 'bookmarked', label: '⭐ Đã Lưu' },
                 { id: 'hints', label: 'Bí Kíp Mật Thư' },
                 { id: 'history', label: 'Sử Liệu Cố Vấn' },
                 { id: 'cuisine', label: 'Ẩm Thực' },
@@ -1065,6 +1327,22 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                       >
                         <MessageSquare className="w-3.5 h-3.5 text-amber-400" />
                         <span>{post.commentsCount} Bình Luận</span>
+                      </button>
+
+                      {/* Bookmark / Save to Heritage Guide */}
+                      <button
+                        onClick={() => handleToggleBookmark(post.id)}
+                        className={`min-h-[34px] flex items-center gap-1 px-2.5 py-1 rounded-xl transition-all ${
+                          playerProgress.bookmarkedPostIds.includes(post.id)
+                            ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40 font-bold'
+                            : 'hover:bg-stone-800 text-stone-400 hover:text-stone-200'
+                        }`}
+                        title={playerProgress.bookmarkedPostIds.includes(post.id) ? 'Bỏ lưu cẩm nang' : 'Lưu bài viết vào cẩm nang'}
+                      >
+                        <Bookmark className={`w-3.5 h-3.5 ${playerProgress.bookmarkedPostIds.includes(post.id) ? 'fill-amber-400 text-amber-400' : ''}`} />
+                        <span className="hidden sm:inline">
+                          {playerProgress.bookmarkedPostIds.includes(post.id) ? 'Đã Lưu' : 'Lưu Bài'}
+                        </span>
                       </button>
 
                       {/* Friendly Community Reactions */}
@@ -1206,6 +1484,26 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                             </button>
                           </div>
                         )}
+
+                        {/* Quick Comment Chips */}
+                        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1 text-[11px]">
+                          <span className="text-[10px] text-stone-500 shrink-0 font-medium">Gợi ý nhanh:</span>
+                          {[
+                            'Tư liệu di sản quý giá quá! 📜',
+                            'Góc nhìn Ba Son rất độc đáo! ⚓',
+                            'Xin thêm manh mối mật thư với ạ! 🧭',
+                            'Tặng bạn ly cà phê vợt nóng hổi! ☕'
+                          ].map((preset, idx) => (
+                            <button
+                              key={idx}
+                              type="button"
+                              onClick={() => handleQuickComment(post.id, preset)}
+                              className="px-2 py-0.5 rounded-lg bg-stone-900/90 hover:bg-amber-500/20 border border-stone-800 hover:border-amber-500/40 text-stone-300 hover:text-amber-300 whitespace-nowrap transition-colors shrink-0"
+                            >
+                              {preset}
+                            </button>
+                          ))}
+                        </div>
 
                         <div className="flex items-center gap-2">
                           <button

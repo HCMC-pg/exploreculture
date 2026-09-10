@@ -33,11 +33,11 @@ interface AIAssistantDrawerProps {
 }
 
 const TOPIC_CATEGORIES = [
-  { id: 'quiz', label: 'Giải Mã Nhiệm Vụ', icon: Zap },
-  { id: 'arch', label: 'Kiến Trúc Độc Bản', icon: Landmark },
-  { id: 'history', label: 'Lịch Sử 300 Năm', icon: BookOpen },
-  { id: 'food', label: 'Ẩm Thực Phương Nam', icon: Coffee },
-  { id: 'tour', label: 'Lộ Trình Du Lịch', icon: Route }
+  { id: 'quiz', label: 'Giải Mã Cổ Thư', icon: Zap },
+  { id: 'arch', label: 'Kiến Trúc Di Sản', icon: Landmark },
+  { id: 'history', label: 'Chính Sử & Niên Đại', icon: BookOpen },
+  { id: 'relics', label: 'Bảo Vật Quốc Gia', icon: Compass },
+  { id: 'culture', label: 'Huyền Tích & Cổ Vật', icon: Route }
 ];
 
 export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
@@ -55,11 +55,11 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       text: 'Dạ, kính chào Lữ Khách! Tôi là Ba Son - Cố Vấn Di Sản & Bách Khoa Toàn Thư Phương Nam. Tôi được tối ưu hóa toàn diện để giải đáp MỌI THẮC MẮC của bạn về lịch sử, kiến trúc, văn hóa, cổ vật và hỗ trợ bạn giải mã các câu đố nhiệm vụ hóc búa nhất tại TP.HCM, Bình Dương và Bà Rịa - Vũng Tàu. Bạn muốn khám phá điều gì hôm nay?',
       timestamp: 'Vừa xong',
       suggestedActions: [
-        'Bí mật kết cấu ngầm và thông gió Địa đạo Củ Chi',
-        'Kiến trúc 3 gian 2 chái Nhà Cổ Đốc Phủ Đẩu',
-        'Bí quyết men gốm da chuối Lò Gốm Đại Hưng (Bình Dương)',
-        'Lịch sử ngọn Hải Đăng cổ nhất Vũng Tàu 1862',
-        'Gợi ý lộ trình 1 ngày du ngoạn di sản TP.HCM'
+        'Bí mật phong thủy và hệ thống hầm chỉ huy Dinh Độc Lập',
+        'Ý nghĩa lịch sử đốc nổi Ba Son 1863 và cuộc bãi công 1925',
+        'Hành trình Bác Hồ tại Bến Nhà Rồng năm 1911 và con tàu Amiral Latouche-Tréville',
+        'Bộ 6 quả chuông đồng và kỹ thuật gạch trần Nhà thờ Đức Bà',
+        'Bí mật cấu trúc ngầm 3 tầng và Bếp Hoàng Cầm Địa đạo Củ Chi'
       ]
     }
   ]);
@@ -69,7 +69,15 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   const [isSpeaking, setIsSpeaking] = useState<boolean>(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string>('quiz');
+  const [aiStatus, setAiStatus] = useState<{ online: boolean; engine: string } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    fetch('/api/gemini/status')
+      .then(res => res.json())
+      .then(data => setAiStatus(data))
+      .catch(() => setAiStatus({ online: false, engine: 'Bách Khoa Cổ Viện Phương Nam (Chính Sử)' }));
+  }, []);
 
   useEffect(() => {
     if (messagesEndRef.current) {
@@ -177,36 +185,38 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
   };
 
   const getPromptsForCategory = (catId: string) => {
+    const locName = currentLocation ? currentLocation.name : null;
+
     switch (catId) {
       case 'quiz':
         return [
-          currentLocation ? `Gợi ý giải câu đố tại ${currentLocation.name}` : 'Cách giải đố mật thư Bến Nhà Rồng',
-          'Ý nghĩa con số 1886 tại Bưu Điện Sài Gòn',
-          'Bí mật bức rèm hoa đá Dinh Độc Lập'
+          locName ? `Manh mối mật thư ẩn giấu tại ${locName}` : 'Cách giải đố mật thư Bến Nhà Rồng',
+          locName ? `Hoa văn và niên đại khảo cứu của ${locName}` : 'Ý nghĩa các con số niên biểu tại Bưu Điện Sài Gòn',
+          'Phương pháp đối chiếu câu đối chữ Hán và niên đại lịch sử'
         ];
       case 'arch':
         return [
-          'Kiến trúc Gothic kết hợp Roman của Nhà Thờ Đức Bà',
-          'Đặc trưng hoa văn gốm sứ Cây Mai tại Chùa Bà Thiên Hậu',
-          'Cấu trúc hầm chỉ huy Dinh Độc Lập'
+          locName ? `Đặc trưng kiến trúc và vật liệu xây dựng tại ${locName}` : 'Kiến trúc Gothic kết hợp Roman của Nhà Thờ Đức Bà',
+          'Nghệ thuật đắp nổi phù điêu gốm Cây Mai tại các hội quán Nam Bộ',
+          'Triết lý chữ Hán Cát - Khẩu - Trung - Tam trong kiến trúc Dinh Độc Lập'
         ];
       case 'history':
         return [
-          'Hành trình ra đi tìm đường cứu nước năm 1911',
-          'Lịch sử tên gọi Ba Son và bến xưởng thủy sư',
-          'Chiến khu Rừng Sác - Cần Giờ'
+          locName ? `Dấu mốc lịch sử quan trọng nhất gắn với ${locName}` : 'Hành trình ra đi tìm đường cứu nước năm 1911 tại Bến Nhà Rồng',
+          'Chu Sư Xưởng Ba Son từ thời chúa Nguyễn Ánh 1790 đến bãi công 1925',
+          'Hệ thống trận đồ phòng thủ ngầm 250km Địa đạo Củ Chi'
         ];
-      case 'food':
+      case 'relics':
         return [
-          'Top món ngon truyền thống quanh Chợ Bến Thành',
-          'Nguồn gốc Cơm Tấm Sài Gòn xưa',
-          'Món Bánh khọt Vũng Tàu và Bánh bèo Bình Dương'
+          locName ? `Bảo vật hoặc hiện vật lịch sử tiêu biểu tại ${locName}` : 'Hai Bảo vật Quốc gia Xe tăng 390 và Xe tăng 843 tại Dinh Độc Lập',
+          'Bản đồ cổ Nam Kỳ viễn đông vẽ tay năm 1892 tại Bưu Điện Sài Gòn',
+          'Bộ 6 quả chuông đồng Sol-La-Si-Do-Re-Mi đúc năm 1879 tại Nhà Thờ Đức Bà'
         ];
-      case 'tour':
+      case 'culture':
         return [
-          'Lộ trình 1 ngày khám phá trọn vẹn Quận 1',
-          'Tour di sản sông nước Sài Gòn - Bình Dương',
-          'Kinh nghiệm du lịch Bãi Sau và Côn Đảo'
+          locName ? `Huyền tích dân gian và văn bia cổ gắn với ${locName}` : 'Tín ngưỡng thờ Bà Thiên Hậu và ký ức thương cảng Bến Nghé xưa',
+          'Nghi thức thượng cờ và di sản hàng hải sông Sài Gòn thế kỷ 19',
+          'Tinh thần quật khởi và văn hóa kháng chiến của quân dân Nam Bộ'
         ];
       default:
         return [];
@@ -232,14 +242,8 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                 <h3 className="font-['Cinzel',serif] font-bold text-base text-amber-200">
                   Cố Vấn Ba Son AI
                 </h3>
-                <span className="text-[10px] bg-gradient-to-r from-emerald-500/20 to-teal-500/20 text-emerald-300 px-2 py-0.5 rounded-full border border-emerald-500/40 font-bold flex items-center gap-1">
-                  <ShieldCheck className="w-2.5 h-2.5 text-emerald-400" />
-                  Gemini 3.8 Flash • Search Grounding
-                </span>
               </div>
-              <p className="text-[11px] text-stone-400 flex items-center gap-1.5 mt-0.5">
-                <span className="text-emerald-400 font-semibold">100% Chính Sử</span>
-                <span>•</span>
+              <p className="text-[11px] text-stone-400 mt-0.5">
                 <span>{currentLocation ? `Đang tại: ${currentLocation.name}` : 'Bách khoa toàn thư di sản Nam Bộ'}</span>
               </p>
             </div>
@@ -336,7 +340,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                   {/* Render content with clean paragraph and markdown styling */}
                   <div className="space-y-2 prose-invert">
                     {msg.text.split('\n\n').map((para, pIdx) => {
-                      if (para.includes('### 📜 Nguồn Trích Dẫn Di Sản') || para.includes('Nguồn Trích Dẫn Di Sản & Thư Tịch')) {
+                      if (para.includes('### 📜') || para.includes('Nguồn Trích Dẫn') || para.includes('Nguồn Sử Liệu')) {
                         return (
                           <div key={pIdx} className="p-3 my-2 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-100 text-xs">
                             <div className="font-bold text-amber-300 flex items-center gap-1.5 mb-1.5 text-xs">
@@ -351,14 +355,22 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
                       }
                       if (para.startsWith('### ')) {
                         return (
-                          <h4 key={pIdx} className="font-bold text-amber-300 text-xs sm:text-sm mt-3 mb-1 border-b border-stone-800 pb-1">
+                          <h4 key={pIdx} className="font-bold text-amber-300 text-xs sm:text-sm mt-3 mb-1 border-b border-stone-800 pb-1 flex items-center gap-1.5">
                             {para.replace('### ', '')}
                           </h4>
                         );
                       }
+
+                      // Split by **bold** markers
+                      const parts = para.split(/(\*\*.*?\*\*)/g);
                       return (
-                        <p key={pIdx} className="whitespace-pre-line text-stone-200">
-                          {para}
+                        <p key={pIdx} className="whitespace-pre-line text-stone-200 leading-relaxed">
+                          {parts.map((part, idx) => {
+                            if (part.startsWith('**') && part.endsWith('**')) {
+                              return <strong key={idx} className="text-amber-200 font-semibold">{part.slice(2, -2)}</strong>;
+                            }
+                            return part;
+                          })}
                         </p>
                       );
                     })}

@@ -32,7 +32,9 @@ import {
   Printer,
   Bot,
   CheckCheck,
-  Filter
+  Filter,
+  Crown,
+  GraduationCap
 } from 'lucide-react';
 import { RewardItem, UserProfile } from '../types';
 import { REWARDS } from '../data/rewards';
@@ -118,6 +120,7 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
   // Search, Filter & Voucher Interaction States
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'ticket' | 'cuisine' | 'souvenir' | 'recommended'>('all');
+  const [inventoryFilter, setInventoryFilter] = useState<'all' | 'equipped' | 'outfit' | 'tool' | 'amulet'>('all');
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
   const handleCopyCode = (code: string) => {
@@ -752,72 +755,311 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
       {/* 🎒 TAB 3: INVENTORY & ACTIVE BUFFS */}
       {activeTab === 'inventory' && (
         <div className="space-y-6 animate-fadeIn">
-          {/* Active Buffs Summary */}
-          <div className="p-5 rounded-2xl bg-gradient-to-r from-amber-950/40 via-stone-900 to-stone-900 border border-amber-500/30 flex items-center justify-between flex-wrap gap-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                <Zap className="w-5 h-5" />
+          {/* Active Buffs Master Panel */}
+          <div className="p-6 rounded-3xl bg-gradient-to-br from-amber-950/60 via-stone-900 to-stone-950 border-2 border-amber-500/40 shadow-2xl relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-8 text-amber-500/5 pointer-events-none">
+              <Zap className="w-48 h-48" />
+            </div>
+
+            <div className="relative z-10">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-5 pb-5 border-b border-amber-500/20">
+                <div className="flex items-center gap-3.5">
+                  <div className="w-12 h-12 rounded-2xl bg-amber-500/20 border-2 border-amber-500/50 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/10">
+                    <Zap className="w-6 h-6 animate-pulse" />
+                  </div>
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <h4 className="text-base font-bold text-amber-200">
+                        Bách Bảo Hòm & Khí Chất Du Hành
+                      </h4>
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+                        Đang Mặc {activeBuffs.equippedCount} Món
+                      </span>
+                    </div>
+                    <p className="text-xs text-stone-400 mt-0.5">
+                      Trang bị cổ vật Nam Bộ để kích hoạt hiệu ứng bổ trợ thám hiểm, nhân đôi điểm số và bảo vệ chuỗi ngày học sử.
+                    </p>
+                  </div>
+                </div>
+
+                {onOpenBaSonAI && (
+                  <button
+                    onClick={() => onOpenBaSonAI('Hãy giới thiệu ý nghĩa văn hóa và sức mạnh của các bảo vật trong Bách Bảo Hòm Nam Bộ.')}
+                    className="px-3.5 py-2 rounded-xl bg-stone-900/90 border border-amber-500/40 hover:border-amber-400 text-xs font-bold text-amber-300 flex items-center gap-2 transition-all hover:bg-stone-800 self-start md:self-auto"
+                  >
+                    <Bot className="w-4 h-4 text-amber-400" />
+                    <span>Hỏi Ba Son AI Về Cổ Vật</span>
+                  </button>
+                )}
               </div>
-              <div>
-                <h4 className="text-sm font-bold text-amber-200">
-                  Hiệu Ứng Trang Bị Đang Kích Hoạt ({activeBuffs.equippedCount} món)
-                </h4>
-                <p className="text-xs text-stone-400">
-                  {activeBuffs.extraLPPercent > 0 && `+${activeBuffs.extraLPPercent}% LP • `}
-                  {activeBuffs.extraExpPercent > 0 && `+${activeBuffs.extraExpPercent}% EXP • `}
-                  Trang bị du hành tăng cường năng lực giải mã di sản
-                </p>
+
+              {/* 5 Core Buff Pillars */}
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+                {/* 1. Bonus LP */}
+                <div className="p-3.5 rounded-2xl bg-stone-950/80 border border-amber-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-amber-400 mb-1">
+                    <span className="text-[11px] font-semibold text-stone-400">Thưởng Điểm LP</span>
+                    <Coins className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div className="text-lg font-black text-amber-300">
+                    +{activeBuffs.extraLPPercent}%
+                  </div>
+                  <span className="text-[10px] text-stone-500 mt-1">Cộng dồn sau mỗi câu đố</span>
+                </div>
+
+                {/* 2. Bonus EXP */}
+                <div className="p-3.5 rounded-2xl bg-stone-950/80 border border-amber-500/30 flex flex-col justify-between">
+                  <div className="flex items-center justify-between text-purple-400 mb-1">
+                    <span className="text-[11px] font-semibold text-stone-400">Kinh Nghiệm EXP</span>
+                    <GraduationCap className="w-4 h-4 text-purple-400" />
+                  </div>
+                  <div className="text-lg font-black text-purple-300">
+                    +{activeBuffs.extraExpPercent}%
+                  </div>
+                  <span className="text-[10px] text-stone-500 mt-1">Gia tăng tốc độ thăng cấp</span>
+                </div>
+
+                {/* 3. Streak Protection */}
+                <div className={`p-3.5 rounded-2xl border flex flex-col justify-between transition-all ${
+                  activeBuffs.protectStreakBonus 
+                    ? 'bg-emerald-950/30 border-emerald-500/50 text-emerald-300' 
+                    : 'bg-stone-950/80 border-stone-800 text-stone-500'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-semibold text-stone-400">Hộ Mệnh Chuỗi Ngày</span>
+                    <ShieldCheck className={`w-4 h-4 ${activeBuffs.protectStreakBonus ? 'text-emerald-400' : 'text-stone-600'}`} />
+                  </div>
+                  <div className="text-xs font-bold mt-1">
+                    {activeBuffs.protectStreakBonus ? 'Đang Bảo Hộ 100%' : 'Chưa Kích Hoạt'}
+                  </div>
+                  <span className="text-[10px] text-stone-500 mt-1">Bảo toàn streak khi quên</span>
+                </div>
+
+                {/* 4. Filter Wrong Answer */}
+                <div className={`p-3.5 rounded-2xl border flex flex-col justify-between transition-all ${
+                  activeBuffs.filterWrongOptionBonus 
+                    ? 'bg-cyan-950/30 border-cyan-500/50 text-cyan-300' 
+                    : 'bg-stone-950/80 border-stone-800 text-stone-500'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-semibold text-stone-400">Tuệ Nhãn Soi Sai</span>
+                    <Eye className={`w-4 h-4 ${activeBuffs.filterWrongOptionBonus ? 'text-cyan-400' : 'text-stone-600'}`} />
+                  </div>
+                  <div className="text-xs font-bold mt-1">
+                    {activeBuffs.filterWrongOptionBonus ? 'Khử 1 Đáp Án Nhiễu' : 'Chưa Kích Hoạt'}
+                  </div>
+                  <span className="text-[10px] text-stone-500 mt-1">Hỗ trợ trắc nghiệm khó</span>
+                </div>
+
+                {/* 5. Fast Hint Speed */}
+                <div className={`p-3.5 rounded-2xl border flex flex-col justify-between transition-all ${
+                  activeBuffs.hintSpeedBonus 
+                    ? 'bg-amber-950/30 border-amber-500/50 text-amber-300' 
+                    : 'bg-stone-950/80 border-stone-800 text-stone-500'
+                }`}>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-semibold text-stone-400">Tốc Độ Cổ Thư</span>
+                    <Zap className={`w-4 h-4 ${activeBuffs.hintSpeedBonus ? 'text-amber-400' : 'text-stone-600'}`} />
+                  </div>
+                  <div className="text-xs font-bold mt-1">
+                    {activeBuffs.hintSpeedBonus ? 'Tăng Tốc 50%' : 'Chuẩn Tốc'}
+                  </div>
+                  <span className="text-[10px] text-stone-500 mt-1">Giảm thời gian mở gợi ý</span>
+                </div>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {(Object.values(equippedMemory.equippedGear) as EquippedGearItem[]).map((gear: EquippedGearItem) => (
-              <div
-                key={gear.id}
-                className={`p-5 rounded-2xl border transition-all ${
-                  gear.isEquipped
-                    ? 'bg-amber-950/20 border-amber-500/60 shadow-lg ring-1 ring-amber-500/30'
-                    : 'bg-stone-900 border-stone-800 opacity-75'
+          {/* Filter Pills for Inventory */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-1.5 p-1 rounded-xl bg-stone-900 border border-stone-800 flex-wrap">
+              <button
+                onClick={() => { sound.playClick(); setInventoryFilter('all'); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  inventoryFilter === 'all'
+                    ? 'bg-amber-500 text-stone-950 shadow'
+                    : 'text-stone-400 hover:text-stone-200'
                 }`}
               >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="w-12 h-12 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
-                    <Compass className="w-6 h-6" />
-                  </div>
-                  <span className={`text-[10px] uppercase font-bold px-2.5 py-1 rounded-full ${
-                    gear.isEquipped 
-                      ? 'bg-emerald-500 text-stone-950' 
-                      : 'bg-stone-800 text-stone-400'
-                  }`}>
-                    {gear.isEquipped ? 'Đang Mặc' : 'Trong Túi'}
-                  </span>
-                </div>
+                Tất Cả Cổ Vật ({(Object.values(equippedMemory.equippedGear) as EquippedGearItem[]).length})
+              </button>
+              <button
+                onClick={() => { sound.playClick(); setInventoryFilter('equipped'); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 ${
+                  inventoryFilter === 'equipped'
+                    ? 'bg-amber-500 text-stone-950 shadow'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                <Zap className="w-3.5 h-3.5 text-amber-400" />
+                <span>Đang Mặc ({activeBuffs.equippedCount})</span>
+              </button>
+              <button
+                onClick={() => { sound.playClick(); setInventoryFilter('outfit'); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  inventoryFilter === 'outfit'
+                    ? 'bg-amber-500 text-stone-950 shadow'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                Y Phục & Khăn
+              </button>
+              <button
+                onClick={() => { sound.playClick(); setInventoryFilter('tool'); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  inventoryFilter === 'tool'
+                    ? 'bg-amber-500 text-stone-950 shadow'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                Pháp Bảo & Dụng Cụ
+              </button>
+              <button
+                onClick={() => { sound.playClick(); setInventoryFilter('amulet'); }}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                  inventoryFilter === 'amulet'
+                    ? 'bg-amber-500 text-stone-950 shadow'
+                    : 'text-stone-400 hover:text-stone-200'
+                }`}
+              >
+                Bùa Hộ Thân
+              </button>
+            </div>
 
-                <h4 className="font-bold text-amber-100 text-sm mb-1">{gear.name}</h4>
-                <div className="p-2.5 rounded-xl bg-stone-950/80 border border-stone-800 mb-3 space-y-1">
-                  <p className="text-xs font-bold text-amber-400 flex items-center gap-1">
-                    <Zap className="w-3 h-3" />
-                    {gear.buffName}
-                  </p>
-                  <p className="text-[11px] text-stone-300 leading-relaxed">{gear.buffDescription}</p>
-                </div>
+            <p className="text-xs text-stone-400 italic">
+              * Nhấn "Mặc Ngay" để kích hoạt buff vào mọi hoạt động thám hiểm
+            </p>
+          </div>
 
-                <div className="flex items-center justify-between pt-2 border-t border-stone-800 text-xs">
-                  <span className="text-stone-500 text-[10px]">Ngày nhận: {gear.acquiredDate}</span>
-                  <button
-                    onClick={() => handleToggleEquip(gear.id)}
-                    className={`px-3 py-1.5 rounded-lg font-bold text-xs transition-all ${
+          {/* Upgraded Gear Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {(Object.values(equippedMemory.equippedGear) as EquippedGearItem[])
+              .filter(gear => {
+                if (inventoryFilter === 'equipped') return gear.isEquipped;
+                if (inventoryFilter === 'outfit') return gear.category === 'outfit' || gear.category === 'headwear';
+                if (inventoryFilter === 'tool') return gear.category === 'tool';
+                if (inventoryFilter === 'amulet') return gear.category === 'amulet' || gear.category === 'accessory';
+                return true;
+              })
+              .map((gear: EquippedGearItem) => {
+                const isLegendary = gear.rarity === 'legendary';
+                const isEpic = gear.rarity === 'epic';
+                const isRare = gear.rarity === 'rare';
+
+                return (
+                  <div
+                    key={gear.id}
+                    className={`p-5 rounded-3xl border-2 transition-all relative overflow-hidden flex flex-col justify-between group ${
                       gear.isEquipped
-                        ? 'bg-stone-800 text-stone-300 hover:bg-stone-700'
-                        : 'bg-amber-500 text-stone-950 hover:bg-amber-400 shadow'
+                        ? isLegendary
+                          ? 'bg-gradient-to-b from-amber-950/40 via-stone-900 to-stone-950 border-amber-400 shadow-xl shadow-amber-500/10 ring-1 ring-amber-400'
+                          : isEpic
+                          ? 'bg-gradient-to-b from-purple-950/40 via-stone-900 to-stone-950 border-purple-500 shadow-xl shadow-purple-500/10 ring-1 ring-purple-500'
+                          : isRare
+                          ? 'bg-gradient-to-b from-cyan-950/40 via-stone-900 to-stone-950 border-cyan-500 shadow-lg shadow-cyan-500/10 ring-1 ring-cyan-500'
+                          : 'bg-amber-950/20 border-amber-500/60 shadow-lg ring-1 ring-amber-500/30'
+                        : 'bg-stone-900/90 border-stone-800 hover:border-stone-700'
                     }`}
                   >
-                    {gear.isEquipped ? 'Tháo Ra' : 'Mặc Ngay'}
-                  </button>
-                </div>
-              </div>
-            ))}
+                    <div>
+                      {/* Card Header & Badges */}
+                      <div className="flex items-start justify-between gap-3 mb-4">
+                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border-2 transition-transform group-hover:scale-105 shadow-md ${
+                          isLegendary
+                            ? 'bg-amber-500/20 border-amber-400 text-amber-300'
+                            : isEpic
+                            ? 'bg-purple-500/20 border-purple-400 text-purple-300'
+                            : isRare
+                            ? 'bg-cyan-500/20 border-cyan-400 text-cyan-300'
+                            : 'bg-emerald-500/20 border-emerald-400 text-emerald-300'
+                        }`}>
+                          {gear.icon === 'Crown' ? <Crown className="w-7 h-7" /> :
+                           gear.icon === 'Search' ? <Search className="w-7 h-7" /> :
+                           gear.icon === 'Shield' ? <Shield className="w-7 h-7" /> :
+                           gear.icon === 'Zap' ? <Zap className="w-7 h-7" /> :
+                           gear.icon === 'Sparkles' ? <Sparkles className="w-7 h-7" /> :
+                           <Compass className="w-7 h-7" />}
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1.5">
+                          <span className={`text-[10px] uppercase font-black px-2.5 py-0.5 rounded-full border ${
+                            gear.isEquipped 
+                              ? 'bg-emerald-500 text-stone-950 border-emerald-400 shadow' 
+                              : 'bg-stone-800 text-stone-400 border-stone-700'
+                          }`}>
+                            {gear.isEquipped ? '✓ Đang Mặc' : 'Trong Túi'}
+                          </span>
+                          <span className={`text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded ${
+                            isLegendary ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40' :
+                            isEpic ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40' :
+                            isRare ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' :
+                            'bg-stone-800 text-stone-400'
+                          }`}>
+                            {isLegendary ? 'Thần Thoại' : isEpic ? 'Sử Thi' : isRare ? 'Hiếm Quý' : 'Phổ Thông'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Gear Title & Category */}
+                      <div className="mb-3">
+                        <h4 className="font-bold text-stone-100 text-sm leading-snug group-hover:text-amber-200 transition-colors">
+                          {gear.name}
+                        </h4>
+                        <span className="text-[10px] text-stone-400 uppercase tracking-widest font-mono">
+                          {gear.category === 'outfit' ? 'Y Phục Cổ' :
+                           gear.category === 'headwear' ? 'Nón & Khăn' :
+                           gear.category === 'amulet' ? 'Bùa Hộ Thân' : 'Pháp Bảo Du Khách'}
+                        </span>
+                      </div>
+
+                      {/* Buff Details Box */}
+                      <div className="p-3 rounded-2xl bg-stone-950/90 border border-stone-800/90 mb-4 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <p className="text-xs font-bold text-amber-300 flex items-center gap-1.5">
+                            <Zap className="w-3.5 h-3.5 text-amber-400" />
+                            {gear.buffName}
+                          </p>
+                          <div className="flex items-center gap-1 text-[10px] font-bold">
+                            {gear.bonusLPPercent && <span className="text-amber-400">+{gear.bonusLPPercent}% LP</span>}
+                            {gear.bonusExpPercent && <span className="text-purple-400">+{gear.bonusExpPercent}% EXP</span>}
+                          </div>
+                        </div>
+                        <p className="text-[11px] text-stone-300 leading-relaxed">
+                          {gear.buffDescription}
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Footer Actions */}
+                    <div className="flex items-center justify-between pt-3 border-t border-stone-800 text-xs gap-2">
+                      <span className="text-stone-500 text-[10px]">
+                        Thu nhận: {gear.acquiredDate}
+                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {onOpenBaSonAI && (
+                          <button
+                            onClick={() => onOpenBaSonAI(`Hãy kể cho tôi nghe nguồn gốc lịch sử và ý nghĩa văn hóa của: ${gear.name}`)}
+                            title="Hỏi Ba Son AI về bảo vật này"
+                            className="p-1.5 rounded-lg bg-stone-800 text-stone-300 hover:text-amber-300 hover:bg-stone-700 transition-colors"
+                          >
+                            <Bot className="w-3.5 h-3.5" />
+                          </button>
+                        )}
+                        <button
+                          onClick={() => handleToggleEquip(gear.id)}
+                          className={`px-3.5 py-1.5 rounded-xl font-bold text-xs transition-all ${
+                            gear.isEquipped
+                              ? 'bg-stone-800 text-stone-300 hover:bg-stone-700'
+                              : 'bg-amber-500 text-stone-950 hover:bg-amber-400 shadow-md shadow-amber-500/20 font-black'
+                          }`}
+                        >
+                          {gear.isEquipped ? 'Tháo Ra' : 'Mặc Ngay'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
           </div>
         </div>
       )}

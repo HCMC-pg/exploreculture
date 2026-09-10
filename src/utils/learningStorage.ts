@@ -34,7 +34,7 @@ export interface QuestRecord {
 export interface EquippedGearItem {
   id: string;
   name: string;
-  category: 'headwear' | 'tool' | 'bag' | 'accessory' | 'journal' | 'water';
+  category: 'headwear' | 'tool' | 'bag' | 'accessory' | 'journal' | 'water' | 'outfit' | 'amulet';
   icon: string;
   buffName: string;
   buffDescription: string;
@@ -45,6 +45,9 @@ export interface EquippedGearItem {
   hintSpeedBonus?: boolean;
   filterWrongOptionBonus?: boolean;
   protectStreakBonus?: boolean;
+  rarity?: 'common' | 'rare' | 'epic' | 'legendary';
+  glowColor?: string;
+  slotType?: 'head' | 'torso' | 'hand' | 'charm';
 }
 
 export interface LearningDailyStreak {
@@ -74,7 +77,7 @@ export interface PlayerLearningMemory {
 const STORAGE_KEY = 'saigon_heritage_learning_memory_v2';
 const INVENTORY_KEY = 'saigon_heritage_equipped_gear_v2';
 
-// Default initial gear unlocked for all heritage travelers
+// Default initial gear unlocked for all heritage travelers with enhanced buffs & rarity
 const DEFAULT_STARTER_GEAR: Record<string, EquippedGearItem> = {
   rew_gear_compass: {
     id: 'rew_gear_compass',
@@ -82,21 +85,88 @@ const DEFAULT_STARTER_GEAR: Record<string, EquippedGearItem> = {
     category: 'tool',
     icon: 'Compass',
     buffName: 'Định Hướng Tri Thức',
-    buffDescription: 'Giảm 50% thời gian chờ mở gợi ý AI và tăng độ nhạy quét AR',
+    buffDescription: 'Giảm 50% thời gian chờ mở gợi ý AI và tăng +10% LP thám hiểm',
     acquiredDate: new Date().toLocaleDateString('vi-VN'),
     isEquipped: true,
-    hintSpeedBonus: true
+    hintSpeedBonus: true,
+    bonusLPPercent: 10,
+    rarity: 'rare',
+    glowColor: 'amber',
+    slotType: 'hand'
   },
   rew_gear_scarf: {
     id: 'rew_gear_scarf',
     name: 'Khăn Rằn Nam Bộ Sợi Bông Dệt Thủ Công',
-    category: 'accessory',
+    category: 'headwear',
     icon: 'Sparkles',
     buffName: 'Hồn Cốt Nam Bộ',
-    buffDescription: 'Biểu tượng văn hóa phương Nam, tăng +10% EXP cho mỗi nhiệm vụ',
+    buffDescription: 'Biểu tượng văn hóa phương Nam, tăng +15% EXP cho mỗi nhiệm vụ',
     acquiredDate: new Date().toLocaleDateString('vi-VN'),
     isEquipped: true,
-    bonusExpPercent: 10
+    bonusExpPercent: 15,
+    rarity: 'common',
+    glowColor: 'emerald',
+    slotType: 'head'
+  },
+  rew_gear_ao_dai: {
+    id: 'rew_gear_ao_dai',
+    name: 'Áo Dài Ngũ Thân Gấm Tơ Tằm Gia Định',
+    category: 'outfit',
+    icon: 'Crown',
+    buffName: 'Phong Thái Trí Giả',
+    buffDescription: 'Trang phục di sản tao nhã, tăng +20% LP và +15% EXP khảo cứu',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    bonusLPPercent: 20,
+    bonusExpPercent: 15,
+    rarity: 'epic',
+    glowColor: 'purple',
+    slotType: 'torso'
+  },
+  rew_gear_magnifier: {
+    id: 'rew_gear_magnifier',
+    name: 'Kính Lúp Khảo Cổ Ba Son Thép Đúc',
+    category: 'tool',
+    icon: 'Search',
+    buffName: 'Soi Tỏ Cổ Vật',
+    buffDescription: 'Tuệ nhãn khảo cổ: Tự động loại trừ 1 phương án sai trong câu hỏi trắc nghiệm',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    filterWrongOptionBonus: true,
+    bonusLPPercent: 15,
+    rarity: 'rare',
+    glowColor: 'cyan',
+    slotType: 'hand'
+  },
+  rew_gear_amulet: {
+    id: 'rew_gear_amulet',
+    name: 'Khánh Bạc Chùa Bà Thiên Hậu Hộ Thân',
+    category: 'amulet',
+    icon: 'Shield',
+    buffName: 'Hộ Mệnh Tâm Can',
+    buffDescription: 'Bảo vệ chuỗi ngày chuyên cần (Streak Protection) khi lỡ quên ôn tập 1 ngày',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: true,
+    protectStreakBonus: true,
+    bonusLPPercent: 10,
+    rarity: 'epic',
+    glowColor: 'rose',
+    slotType: 'charm'
+  },
+  rew_gear_lantern: {
+    id: 'rew_gear_lantern',
+    name: 'Đèn Bão Bến Tàu Sài Gòn 1863',
+    category: 'tool',
+    icon: 'Zap',
+    buffName: 'Hải Đăng Dẫn Lối',
+    buffDescription: 'Khai mở tầm nhìn cổ thư ban đêm, tăng +20% EXP và tăng tốc gợi ý',
+    acquiredDate: new Date().toLocaleDateString('vi-VN'),
+    isEquipped: false,
+    hintSpeedBonus: true,
+    bonusExpPercent: 20,
+    rarity: 'rare',
+    glowColor: 'amber',
+    slotType: 'hand'
   }
 };
 
@@ -109,6 +179,18 @@ export const getLearningMemory = (): PlayerLearningMemory => {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed: PlayerLearningMemory = JSON.parse(raw);
+      // Ensure all starter gear is merged so player has new upgraded relics
+      let hasNewGear = false;
+      Object.keys(DEFAULT_STARTER_GEAR).forEach(k => {
+        if (!parsed.equippedGear || !parsed.equippedGear[k]) {
+          parsed.equippedGear = parsed.equippedGear || {};
+          parsed.equippedGear[k] = DEFAULT_STARTER_GEAR[k];
+          hasNewGear = true;
+        }
+      });
+      if (hasNewGear) {
+        saveLearningMemory(parsed);
+      }
       return parsed;
     }
   } catch (err) {

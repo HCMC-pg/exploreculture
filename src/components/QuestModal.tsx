@@ -258,11 +258,11 @@ export const QuestModal: React.FC<QuestModalProps> = ({
         })
       });
       const data = await response.json();
-      setAiHintText(data.hint || (currentStep.puzzleData as any)[`hintLevel${level}`] || currentStep.puzzleData.explanation);
+      setAiHintText(data.hint || (currentStep.puzzleData as any)[`hintLevel${level}`] || 'Cổ thư ẩn giấu quy luật niên đại và hoa văn đặc thù. Hãy đối chiếu sự kiện lớn nhất gắn với địa danh để tìm chìa khóa giải mã.');
     } catch (err) {
-      if (level === 1) setAiHintText(currentStep.puzzleData.hintLevel1 || 'Đọc kỹ câu thơ manh mối để tìm từ khóa then chốt!');
-      else if (level === 2) setAiHintText(currentStep.puzzleData.hintLevel2 || 'Quan sát thời kỳ lịch sử và đặc điểm kiến trúc của địa danh.');
-      else setAiHintText(currentStep.puzzleData.hintLevel3 || currentStep.puzzleData.explanation);
+      if (level === 1) setAiHintText(currentStep.puzzleData.hintLevel1 || 'Khẩu quyết huyền cơ: Quan sát kỹ hướng chiếu sáng, màu đất nung và các con số chạm khắc tại di tích.');
+      else if (level === 2) setAiHintText(currentStep.puzzleData.hintLevel2 || 'Mật mã niên biểu: Liên kết sự kiện của câu đố với bối cảnh Nam Kỳ thế kỷ 19-20 và các hiện vật trưng bày tiêu biểu.');
+      else setAiHintText(currentStep.puzzleData.hintLevel3 || 'Biện chứng cổ thư: Hãy xâu chuỗi nhân quả giữa biến cố lịch sử và dấu vết kiến trúc độc bản để tự mình đưa ra câu trả lời chính xác.');
     } finally {
       setIsLoadingHint(false);
     }
@@ -688,25 +688,33 @@ export const QuestModal: React.FC<QuestModalProps> = ({
 
               {/* Cultural Lore & Clue Verse Box */}
               {currentStep.clueVerse && (
-                <div className="p-3.5 rounded-2xl bg-gradient-to-br from-amber-950/30 via-stone-900/60 to-stone-950 border border-amber-500/30 relative overflow-hidden shadow-inner">
-                  <div className="absolute -right-4 -bottom-4 text-amber-500/5">
-                    <BookOpen className="w-24 h-24" />
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/40 via-stone-900/80 to-stone-950 border-2 border-amber-500/40 relative overflow-hidden shadow-2xl">
+                  <div className="absolute -right-4 -bottom-4 text-amber-500/10 pointer-events-none">
+                    <BookOpen className="w-28 h-28" />
                   </div>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <p className="text-[11px] font-bold text-amber-400/90 uppercase tracking-widest flex items-center gap-1.5">
-                      <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                      📜 Manh Mối Cổ Thư & Thơ Vịnh Nam Bộ:
-                    </p>
+                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono text-[10px] font-black uppercase tracking-wider border border-amber-500/40">
+                        Cổ Thư Tuyệt Mật
+                      </span>
+                      <p className="text-[11px] font-bold text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
+                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                        Manh Mối Thi Ca Ẩn Dụ Nam Bộ:
+                      </p>
+                    </div>
                     <button
                       onClick={toggleNarration}
-                      className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 underline underline-offset-2"
+                      className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-900/80 border border-amber-500/30 transition-colors"
                     >
-                      <Volume2 className="w-3 h-3" />
-                      {isAudioNarrating ? 'Tắt đọc thơ' : 'Nghe ngâm thơ'}
+                      <Volume2 className="w-3 h-3 text-amber-400" />
+                      {isAudioNarrating ? 'Tắt đọc cổ thư' : 'Ngâm cổ thư'}
                     </button>
                   </div>
-                  <p className="font-['Be_Vietnam_Pro',sans-serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-2 border-l-2 border-amber-500/60">
+                  <p className="font-['Cinzel',serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-3 border-l-2 border-amber-400/80 py-0.5">
                     "{currentStep.clueVerse}"
+                  </p>
+                  <p className="text-[10px] text-stone-400 mt-2 italic flex items-center gap-1">
+                    <span>* Cổ thư chứa mật ngữ khảo cứu. Hãy đối chiếu các chi tiết hoa văn, niên biểu và kiến trúc tại di tích để phá giải.</span>
                   </p>
                 </div>
               )}
@@ -1051,7 +1059,7 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                             }`}
                           >
                             <span>🌱</span>
-                            <span>Mức 1: Manh Mối Khẽ Khàng</span>
+                            <span>Mức 1: Huyền Cơ Thi Khẩu</span>
                           </button>
                           <button
                             onClick={() => handleRequestHint(2)}
@@ -1062,7 +1070,7 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                             }`}
                           >
                             <span>🏛️</span>
-                            <span>Mức 2: Tọa Độ & Cổ Sử</span>
+                            <span>Mức 2: Mật Mã Niên Biểu</span>
                           </button>
                           <button
                             onClick={() => handleRequestHint(3)}
@@ -1073,7 +1081,7 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                             }`}
                           >
                             <span>📜</span>
-                            <span>Mức 3: Giải Nghĩa Toàn Diện</span>
+                            <span>Mức 3: Biện Chứng Cổ Thư</span>
                           </button>
                         </div>
 
