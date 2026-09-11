@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { ChatMessage, Location3D } from '../types';
 import { sound } from '../utils/audio';
+import { generateBaSonAIResponse } from '../utils/baSonAIEngine';
 
 interface AIAssistantDrawerProps {
   isOpen: boolean;
@@ -101,18 +102,35 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     setIsLoading(true);
 
     try {
-      const response = await fetch('/api/gemini/chat', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          message: query,
-          locationContext: currentLocation ? `${currentLocation.name} (${currentLocation.province})` : 'TP. Hồ Chí Minh & Nam Bộ',
-          history: messages.slice(-6)
-        })
-      });
+      let aiReplyText = '';
+      const locationContext = currentLocation ? `${currentLocation.name} (${currentLocation.province})` : 'TP. Hồ Chí Minh & Nam Bộ';
 
-      const data = await response.json();
-      const aiReplyText = data.reply || 'Ba Son đã ghi nhận. Hãy tiếp tục quan sát các chi tiết kiến trúc độc đáo nhé!';
+      try {
+        const response = await fetch('/api/gemini/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            message: query,
+            locationContext,
+            history: messages.slice(-6)
+          })
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.reply && typeof data.reply === 'string' && data.reply.trim().length > 0) {
+            aiReplyText = data.reply;
+          }
+        }
+      } catch (err) {
+        console.warn('Backend chat API not reachable (static web / GitHub export). Falling back to offline Ba Son AI Engine.');
+      }
+
+      // Nếu không kết nối được server (ví dụ xuất bản ra GitHub Pages / Web tĩnh)
+      // hoặc API trả về rỗng, Ba Son AI Engine lập tức đảm nhiệm để trả lời chuẩn xác 100%
+      if (!aiReplyText) {
+        aiReplyText = generateBaSonAIResponse(query, locationContext, undefined, messages.slice(-6));
+      }
 
       const aiMsg: ChatMessage = {
         id: `ai_${Date.now()}`,
@@ -124,15 +142,6 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
 
       setMessages(prev => [...prev, aiMsg]);
       sound.playDanTranhNote(587.33, 0.8);
-    } catch (err) {
-      const fallbackMsg: ChatMessage = {
-        id: `ai_${Date.now()}`,
-        sender: 'ai',
-        senderName: 'Cố Vấn Ba Son',
-        text: 'Vùng đất Gia Định - Sài Gòn - Phương Nam chất chứa hơn 300 năm bề dày lịch sử. Bạn hãy quan sát kỹ hoa văn, vật liệu và bối cảnh lịch sử của địa danh để tìm ra đáp án chính xác nhé!',
-        timestamp: 'Vừa xong'
-      };
-      setMessages(prev => [...prev, fallbackMsg]);
     } finally {
       setIsLoading(false);
     }

@@ -1,0 +1,42 @@
+{
+  "site": {
+    "title": "Nam Bộ Di Sản Ký - Khám Phá Văn Hóa Phương Nam",
+    "tagline": "Bách Khoa Di Sản & Hệ Thống Khám Phá Văn Hóa Tương Tác",
+    "description": "Ứng dụng tương tác khám phá lịch sử, di tích văn hóa, kiến trúc và ẩm thực TP.HCM, Bình Dương và Bà Rịa - Vũng Tàu cùng Cố Vấn Ba Son AI."
+  },
+  "aiAssistant": {
+    "name": "Cố Vấn Ba Son",
+    "title": "Trí Tuệ Di Sản Phương Nam",
+    "version": "Ba Son AI 3.6",
+    "welcomeMessage": "Dạ, kính chào Lữ Khách! Tôi là Ba Son - Cố Vấn Di Sản & Bách Khoa Toàn Thư Phương Nam. Tôi được tối ưu hóa toàn diện để giải đáp MỌI THẮC MẮC của bạn về lịch sử, kiến trúc, văn hóa, cổ vật và hỗ trợ bạn giải mã các câu đố nhiệm vụ hóc búa nhất tại TP.HCM, Bình Dương và Bà Rịa - Vũng Tàu. Bạn muốn khám phá điều gì hôm nay?",
+    "promptSuggestions": [
+      "Ai thiết kế Bưu điện TP.HCM và Dinh Độc Lập?",
+      "Nhà thờ Đức Bà xây năm nào và gạch từ đâu?",
+      "Ý nghĩa lịch sử của Bến Nhà Rồng ngày 5/6/1911",
+      "Địa đạo Củ Chi dài bao nhiêu và bếp Hoàng Cầm",
+      "Bạch Dinh Vũng Tàu từng giam lỏng vị vua nào?",
+      "Lịch sử tên gọi Ba Son và bến xưởng thủy sư"
+    ]
+  },
+  "heritageRegions": [
+    {
+      "id": "hcm",
+      "name": "Thành phố Hồ Chí Minh",
+      "historicalName": "Gia Định - Sài Gòn",
+      "founded": "1698",
+      "pioneer": "Lễ Thành hầu Nguyễn Hữu Cảnh"
+    },
+    {
+      "id": "binh_duong",
+      "name": "Bình Dương",
+      "historicalName": "Đất Thủ - Sông Bé",
+      "knownFor": "Gốm Lái Thiêu, Sơn Mài Tương Bình Hiệp, Chùa Hội Khánh"
+    },
+    {
+      "id": "vung_tau",
+      "name": "Bà Rịa - Vũng Tàu",
+      "historicalName": "Thắng Tam - Mô Xoài",
+      "knownFor": "Hải Đăng Núi Nhỏ, Bạch Dinh, Nhà Tù Côn Đảo, Làng Chài Phước Hải"
+    }
+  ]
+}

@@ -51,6 +51,7 @@ import {
   getLearningMemory
 } from '../utils/learningStorage';
 import { SiteMasteryRadialIndicator } from './SiteMasteryRadialIndicator';
+import { generateBaSonHint } from '../utils/baSonAIEngine';
 
 interface QuestModalProps {
   quest: Quest;
@@ -192,17 +193,8 @@ export const QuestModal: React.FC<QuestModalProps> = ({
       setIsStarred(memory.starredQuestions.includes(currentStep.id));
       setStepNote(memory.studyNotes[currentStep.id] || '');
 
-      // Apply Flashlight buff: filter out 1 wrong choice if multiple choice
-      if (buffs.filterWrongOptionBonus && currentStep.puzzleData.options && currentStep.puzzleData.options.length > 2) {
-        const wrongOpts = currentStep.puzzleData.options.filter(
-          o => String(o).trim().toLowerCase() !== String(currentStep.puzzleData.correctAnswer).trim().toLowerCase()
-        );
-        if (wrongOpts.length > 0) {
-          setFilteredWrongOption(wrongOpts[0]);
-        }
-      } else {
-        setFilteredWrongOption(null);
-      }
+      // Đảm bảo không ẩn hay gạch bỏ bất kỳ câu trả lời nào, mọi phương án đều luôn hiển thị đầy đủ và có thể chọn
+      setFilteredWrongOption(null);
     }
   }, [currentStepIndex, activeTierFilter]);
 
@@ -249,24 +241,41 @@ export const QuestModal: React.FC<QuestModalProps> = ({
     setIsLoadingHint(true);
 
     try {
-      const response = await fetch('/api/gemini/hint', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          questTitle: quest.title,
-          stepTitle: currentStep.title,
-          question: currentStep.puzzleData.question,
-          clueVerse: currentStep.clueVerse,
-          hintLevel: level,
-          locationName: location.name
-        })
+      try {
+        const response = await fetch('/api/gemini/hint', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            questTitle: quest.title,
+            stepTitle: currentStep.title,
+            question: currentStep.puzzleData.question,
+            clueVerse: currentStep.clueVerse,
+            hintLevel: level,
+            locationName: location.name
+          })
+        });
+        if (response.ok) {
+          const data = await response.json();
+          if (data && data.hint && typeof data.hint === 'string' && data.hint.trim().length > 0) {
+            setAiHintText(data.hint);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Hint API unreachable, using Ba Son offline AI hint engine.');
+      }
+
+      // Fallback thông minh: Dùng Ba Son AI Hint Engine tích hợp sẵn
+      const offlineHint = generateBaSonHint({
+        questTitle: quest.title,
+        stepTitle: currentStep.title,
+        question: currentStep.puzzleData.question,
+        clueVerse: currentStep.clueVerse,
+        hintLevel: level,
+        locationName: location.name,
+        puzzleData: currentStep.puzzleData
       });
-      const data = await response.json();
-      setAiHintText(data.hint || (currentStep.puzzleData as any)[`hintLevel${level}`] || currentStep.puzzleData.explanation);
-    } catch (err) {
-      if (level === 1) setAiHintText(currentStep.puzzleData.hintLevel1 || 'Đọc kỹ câu thơ manh mối để tìm từ khóa then chốt!');
-      else if (level === 2) setAiHintText(currentStep.puzzleData.hintLevel2 || 'Quan sát thời kỳ lịch sử và đặc điểm kiến trúc của địa danh.');
-      else setAiHintText(currentStep.puzzleData.hintLevel3 || currentStep.puzzleData.explanation);
+      setAiHintText(offlineHint);
     } finally {
       setIsLoadingHint(false);
     }
@@ -781,37 +790,62 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                   <div className="space-y-2 pt-2">
                     {currentStep.puzzleData.options?.map((option, idx) => {
                       const isSelected = selectedOption === option;
-                      const isFilteredWrong = filteredWrongOption === option;
+                      const isCorrectChoice = String(option).trim().toLowerCase() === String(currentStep.puzzleData.correctAnswer).trim().toLowerCase();
 
                       return (
                         <button
                           key={idx}
+                          type="button"
                           onClick={() => {
-                            if (!isAnswerSubmitted) {
-                              sound.playClick();
-                              setSelectedOption(option);
+                            sound.playClick();
+                            setSelectedOption(option);
+                            if (isAnswerSubmitted) {
+                              setIsAnswerSubmitted(false);
                             }
                           }}
-                          disabled={isAnswerSubmitted || isFilteredWrong}
-                          className={`w-full p-3 rounded-xl text-left text-xs sm:text-sm font-medium transition-all flex items-center justify-between border ${
-                            isFilteredWrong
-                              ? 'opacity-30 line-through bg-stone-950 border-stone-800 cursor-not-allowed'
+                          className={`w-full p-3 rounded-xl text-left text-xs sm:text-sm font-medium transition-all flex items-center justify-between border cursor-pointer ${
+                            isAnswerSubmitted
+                              ? isCorrectChoice
+                                ? 'bg-emerald-950/40 border-emerald-500 text-emerald-200 shadow-md'
+                                : isSelected
+                                  ? 'bg-rose-950/40 border-rose-500 text-rose-200 shadow-md'
+                                  : 'bg-stone-900/90 border-stone-800 text-stone-300 hover:border-amber-500/60 hover:bg-stone-850'
                               : isSelected
-                                ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md'
-                                : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700 hover:bg-stone-850'
+                                ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md ring-1 ring-amber-400/50'
+                                : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-amber-500/60 hover:bg-stone-850'
                           }`}
                         >
                           <div className="flex items-center gap-3">
-                            <span className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center border ${
-                              isSelected 
-                                ? 'bg-amber-500 text-stone-950 border-amber-300' 
-                                : 'bg-stone-800 text-stone-400 border-stone-700'
+                            <span className={`w-6 h-6 rounded-lg text-xs font-bold flex items-center justify-center border shrink-0 ${
+                              isAnswerSubmitted && isCorrectChoice
+                                ? 'bg-emerald-500 text-stone-950 border-emerald-300'
+                                : isAnswerSubmitted && isSelected && !isCorrectChoice
+                                  ? 'bg-rose-500 text-stone-100 border-rose-300'
+                                  : isSelected 
+                                    ? 'bg-amber-500 text-stone-950 border-amber-300' 
+                                    : 'bg-stone-800 text-stone-400 border-stone-700'
                             }`}>
                               {String.fromCharCode(65 + idx)}
                             </span>
-                            <span>{option}</span>
+                            <span className="leading-snug">{option}</span>
                           </div>
-                          {isSelected && <Check className="w-4 h-4 text-amber-400" />}
+                          <div className="flex items-center gap-1.5 shrink-0">
+                            {isAnswerSubmitted && isCorrectChoice && (
+                              <span className="text-[11px] font-bold text-emerald-400 flex items-center gap-1">
+                                <Check className="w-4 h-4 text-emerald-400" />
+                                <span className="hidden sm:inline">Đáp án đúng</span>
+                              </span>
+                            )}
+                            {isAnswerSubmitted && isSelected && !isCorrectChoice && (
+                              <span className="text-[11px] font-bold text-rose-400 flex items-center gap-1">
+                                <AlertCircle className="w-3.5 h-3.5 text-rose-400" />
+                                <span className="hidden sm:inline">Đã chọn</span>
+                              </span>
+                            )}
+                            {!isAnswerSubmitted && isSelected && (
+                              <Check className="w-4 h-4 text-amber-400" />
+                            )}
+                          </div>
                         </button>
                       );
                     })}
@@ -841,28 +875,32 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                             <span className="truncate">{item}</span>
                           </div>
 
-                          {!isAnswerSubmitted && (
-                            <div className="flex items-center gap-1 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => moveOrderItem(idx, 'up')}
-                                disabled={idx === 0}
-                                className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 text-xs font-bold border border-stone-700 transition-colors"
-                                title="Đưa lên trước"
-                              >
-                                ▲ Lên
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => moveOrderItem(idx, 'down')}
-                                disabled={idx === orderedItems.length - 1}
-                                className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 text-xs font-bold border border-stone-700 transition-colors"
-                                title="Đưa xuống sau"
-                              >
-                                ▼ Xuống
-                              </button>
-                            </div>
-                          )}
+                          <div className="flex items-center gap-1 shrink-0">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                moveOrderItem(idx, 'up');
+                                if (isAnswerSubmitted) setIsAnswerSubmitted(false);
+                              }}
+                              disabled={idx === 0}
+                              className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 text-xs font-bold border border-stone-700 transition-colors cursor-pointer"
+                              title="Đưa lên trước"
+                            >
+                              ▲ Lên
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                moveOrderItem(idx, 'down');
+                                if (isAnswerSubmitted) setIsAnswerSubmitted(false);
+                              }}
+                              disabled={idx === orderedItems.length - 1}
+                              className="px-2 py-1 rounded-lg bg-stone-800 hover:bg-stone-700 disabled:opacity-30 disabled:cursor-not-allowed text-stone-300 text-xs font-bold border border-stone-700 transition-colors cursor-pointer"
+                              title="Đưa xuống sau"
+                            >
+                              ▼ Xuống
+                            </button>
+                          </div>
                         </div>
                       ))}
                     </div>
@@ -871,8 +909,10 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                       <input
                         type="text"
                         value={textInput}
-                        onChange={(e) => setTextInput(e.target.value)}
-                        disabled={isAnswerSubmitted}
+                        onChange={(e) => {
+                          setTextInput(e.target.value);
+                          if (isAnswerSubmitted) setIsAnswerSubmitted(false);
+                        }}
                         placeholder="Mã trình tự (ví dụ: A B C D hoặc D C B A)..."
                         className="w-full p-2.5 rounded-xl bg-stone-900 border border-stone-700 text-stone-100 text-xs sm:text-sm font-mono outline-none focus:border-amber-400 transition-colors"
                       />
@@ -895,13 +935,11 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                               key={idx}
                               type="button"
                               onClick={() => {
-                                if (!isAnswerSubmitted) {
-                                  sound.playClick();
-                                  setTextInput(opt);
-                                }
+                                sound.playClick();
+                                setTextInput(opt);
+                                if (isAnswerSubmitted) setIsAnswerSubmitted(false);
                               }}
-                              disabled={isAnswerSubmitted}
-                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all ${
+                              className={`px-2.5 py-1 rounded-lg text-xs font-semibold border transition-all cursor-pointer ${
                                 textInput === opt
                                   ? 'bg-amber-500 text-stone-950 border-amber-300 shadow-sm'
                                   : 'bg-stone-900 text-stone-300 border-stone-800 hover:border-amber-500/60 hover:text-amber-200'
@@ -918,12 +956,14 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                       <input
                         type="text"
                         value={textInput}
-                        onChange={(e) => setTextInput(e.target.value)}
-                        disabled={isAnswerSubmitted}
+                        onChange={(e) => {
+                          setTextInput(e.target.value);
+                          if (isAnswerSubmitted) setIsAnswerSubmitted(false);
+                        }}
                         placeholder="Nhập từ hoặc cụm từ điền vào chỗ trống..."
                         className="w-full p-3 rounded-xl bg-stone-900 border border-stone-700 text-stone-100 text-xs sm:text-sm font-semibold outline-none focus:border-amber-400 transition-colors"
                         onKeyDown={(e) => {
-                          if (e.key === 'Enter' && !isAnswerSubmitted && textInput.trim()) {
+                          if (e.key === 'Enter' && textInput.trim()) {
                             handleSubmitAnswer();
                           }
                         }}
@@ -952,12 +992,14 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                     <input
                       type="text"
                       value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
-                      disabled={isAnswerSubmitted}
+                      onChange={(e) => {
+                        setTextInput(e.target.value);
+                        if (isAnswerSubmitted) setIsAnswerSubmitted(false);
+                      }}
                       placeholder="Nhập chuỗi thông điệp đã giải mã..."
                       className="w-full p-3 rounded-xl bg-stone-900 border border-stone-700 text-stone-100 text-xs sm:text-sm font-mono font-bold outline-none focus:border-amber-400 transition-colors"
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !isAnswerSubmitted && textInput.trim()) {
+                        if (e.key === 'Enter' && textInput.trim()) {
                           handleSubmitAnswer();
                         }
                       }}
@@ -971,12 +1013,14 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                     <input
                       type="text"
                       value={textInput}
-                      onChange={(e) => setTextInput(e.target.value)}
-                      disabled={isAnswerSubmitted}
+                      onChange={(e) => {
+                        setTextInput(e.target.value);
+                        if (isAnswerSubmitted) setIsAnswerSubmitted(false);
+                      }}
                       placeholder="Nhập kiến giải lịch sử hoặc từ khóa cốt lõi..."
                       className="w-full p-3 rounded-xl bg-stone-900 border border-stone-700 text-stone-100 text-xs sm:text-sm font-semibold outline-none focus:border-amber-400 transition-colors"
                       onKeyDown={(e) => {
-                        if (e.key === 'Enter' && !isAnswerSubmitted && textInput.trim()) {
+                        if (e.key === 'Enter' && textInput.trim()) {
                           handleSubmitAnswer();
                         }
                       }}
