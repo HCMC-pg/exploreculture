@@ -1181,6 +1181,8 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                       <img
                         src={reward.image}
                         alt={reward.name}
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent" />
@@ -1342,6 +1344,7 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
               <img
                 src={selectedRewardForRedeem.image}
                 alt={selectedRewardForRedeem.name}
+                referrerPolicy="no-referrer"
                 className="w-16 h-16 rounded-xl object-cover"
               />
               <div>

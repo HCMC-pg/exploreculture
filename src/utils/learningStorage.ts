@@ -74,8 +74,42 @@ export interface PlayerLearningMemory {
   lastUpdated: string;
 }
 
-const STORAGE_KEY = 'saigon_heritage_learning_memory_v2';
-const INVENTORY_KEY = 'saigon_heritage_equipped_gear_v2';
+const STORAGE_KEY = 'saigon_heritage_learning_memory_v3';
+const INVENTORY_KEY = 'saigon_heritage_equipped_gear_v3';
+
+// Storage Partitioning by User Gmail
+let activeSessionEmail: string | null = null;
+
+export const setActiveSessionEmail = (email: string | null): void => {
+  activeSessionEmail = email ? email.trim().toLowerCase() : null;
+  if (activeSessionEmail) {
+    try {
+      localStorage.setItem('saigon_heritage_active_email', activeSessionEmail);
+    } catch (e) {}
+  }
+};
+
+export const getActiveSessionEmail = (): string | null => {
+  if (activeSessionEmail) return activeSessionEmail;
+  try {
+    const raw = localStorage.getItem('saigon_heritage_active_email');
+    if (raw && raw.includes('@')) {
+      activeSessionEmail = raw.trim().toLowerCase();
+      return activeSessionEmail;
+    }
+  } catch (e) {}
+  return null;
+};
+
+export const sanitizeEmailKey = (email?: string | null): string => {
+  const target = (email || getActiveSessionEmail() || 'default').trim().toLowerCase();
+  return target.replace(/[^a-z0-9_]/g, '_');
+};
+
+export const getMemoryStorageKey = (email?: string | null): string => {
+  const sanitized = sanitizeEmailKey(email);
+  return `saigon_heritage_learning_memory_v3_${sanitized}`;
+};
 
 // Default initial gear unlocked for all heritage travelers with enhanced buffs & rarity
 const DEFAULT_STARTER_GEAR: Record<string, EquippedGearItem> = {
@@ -174,9 +208,10 @@ export const getTodayDateString = (): string => {
   return new Date().toISOString().split('T')[0];
 };
 
-export const getLearningMemory = (): PlayerLearningMemory => {
+export const getLearningMemory = (email?: string): PlayerLearningMemory => {
+  const key = getMemoryStorageKey(email);
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = localStorage.getItem(key) || localStorage.getItem(STORAGE_KEY);
     if (raw) {
       const parsed: PlayerLearningMemory = JSON.parse(raw);
       // Ensure all starter gear is merged so player has new upgraded relics
@@ -189,7 +224,7 @@ export const getLearningMemory = (): PlayerLearningMemory => {
         }
       });
       if (hasNewGear) {
-        saveLearningMemory(parsed);
+        saveLearningMemory(parsed, email);
       }
       return parsed;
     }
@@ -199,19 +234,19 @@ export const getLearningMemory = (): PlayerLearningMemory => {
 
   const today = getTodayDateString();
   const initialMemory: PlayerLearningMemory = {
-    userId: 'user_sg_exp_01',
+    userId: email ? `user_${sanitizeEmailKey(email)}` : 'user_sg_exp_01',
     questRecords: {},
     totalQuestionsAnswered: 0,
     totalCorrectAnswers: 0,
     overallAccuracy: 0,
     totalStudyMinutes: 0,
     dailyStreak: {
-      currentStreak: 1,
-      longestStreak: 1,
+      currentStreak: 0,
+      longestStreak: 0,
       lastActiveDate: today,
       todayQuestionsAnswered: 0,
       dailyGoal: 5,
-      streakHistory: [today],
+      streakHistory: [],
       streakFreezeTokens: 2
     },
     equippedGear: DEFAULT_STARTER_GEAR,
@@ -220,11 +255,12 @@ export const getLearningMemory = (): PlayerLearningMemory => {
     lastUpdated: new Date().toISOString()
   };
 
-  saveLearningMemory(initialMemory);
+  saveLearningMemory(initialMemory, email);
   return initialMemory;
 };
 
-export const saveLearningMemory = (memory: PlayerLearningMemory): void => {
+export const saveLearningMemory = (memory: PlayerLearningMemory, email?: string): void => {
+  const key = getMemoryStorageKey(email);
   try {
     memory.lastUpdated = new Date().toISOString();
     // Recalculate stats
@@ -239,7 +275,8 @@ export const saveLearningMemory = (memory: PlayerLearningMemory): void => {
     memory.totalQuestionsAnswered = totalAnswered;
     memory.totalCorrectAnswers = totalCorrect;
     memory.overallAccuracy = totalAnswered > 0 ? Math.round((totalCorrect / totalAnswered) * 100) : 0;
-
+    localStorage.setItem(key, JSON.stringify(memory));
+    // Also set default key for backward compatibility
     localStorage.setItem(STORAGE_KEY, JSON.stringify(memory));
   } catch (err) {
     console.error('Failed to save learning memory:', err);
@@ -459,29 +496,37 @@ export const getActiveTravelerBuffs = () => {
 };
 
 // =========================================================================
-// User Preferences & Learning Habits Management
+// User Preferences & Learning Habits Management (Gmail-Partitioned & Reset Ready)
 // =========================================================================
 
 import { UserPreferences, LearningHabits, DayStudyRecord } from '../types';
 
-const PREFERENCES_STORAGE_KEY = 'saigon_heritage_user_preferences_v2';
-const HABITS_STORAGE_KEY = 'saigon_heritage_learning_habits_v2';
+export const getPreferencesStorageKey = (email?: string): string => {
+  const sanitized = sanitizeEmailKey(email);
+  return `saigon_heritage_user_preferences_v3_${sanitized}`;
+};
+
+export const getHabitsStorageKey = (email?: string): string => {
+  const sanitized = sanitizeEmailKey(email);
+  return `saigon_heritage_learning_habits_v3_${sanitized}`;
+};
 
 export const getDefaultPreferences = (): UserPreferences => ({
-  favoriteCategories: ['architecture', 'history', 'cuisine', 'culture'],
-  preferredEras: ['Thời Chúa Nguyễn & Gia Định', 'Sài Gòn - Gia Định Xưa', 'Kháng Chiến Nam Bộ'],
+  favoriteCategories: [],
+  preferredEras: [],
   learningStyle: 'interactive',
-  dailyStudyGoalMinutes: 20,
-  preferredStudyTime: 'evening',
+  dailyStudyGoalMinutes: 15,
+  preferredStudyTime: 'morning',
   preferredGuideId: 'co_van_ba_son',
-  bookmarkedLandmarks: ['loc_ben_thanh', 'loc_duc_ba', 'loc_nha_rong'],
+  bookmarkedLandmarks: [],
   autoPlayAudioEffects: true,
   studyReminderEnabled: true
 });
 
-export const getUserPreferences = (): UserPreferences => {
+export const getUserPreferences = (email?: string): UserPreferences => {
+  const key = getPreferencesStorageKey(email);
   try {
-    const raw = localStorage.getItem(PREFERENCES_STORAGE_KEY);
+    const raw = localStorage.getItem(key) || localStorage.getItem('saigon_heritage_user_preferences_v3');
     if (raw) {
       return { ...getDefaultPreferences(), ...JSON.parse(raw) };
     }
@@ -491,16 +536,18 @@ export const getUserPreferences = (): UserPreferences => {
   return getDefaultPreferences();
 };
 
-export const saveUserPreferences = (prefs: UserPreferences): void => {
+export const saveUserPreferences = (prefs: UserPreferences, email?: string): void => {
+  const key = getPreferencesStorageKey(email);
   try {
-    localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(prefs));
+    localStorage.setItem(key, JSON.stringify(prefs));
+    localStorage.setItem('saigon_heritage_user_preferences_v3', JSON.stringify(prefs));
   } catch (e) {
     console.warn('Could not save user preferences:', e);
   }
 };
 
-export const toggleBookmarkLocation = (locationId: string): string[] => {
-  const prefs = getUserPreferences();
+export const toggleBookmarkLocation = (locationId: string, email?: string): string[] => {
+  const prefs = getUserPreferences(email);
   const bookmarks = Array.isArray(prefs.bookmarkedLandmarks) ? [...prefs.bookmarkedLandmarks] : [];
   const idx = bookmarks.indexOf(locationId);
   if (idx >= 0) {
@@ -509,7 +556,7 @@ export const toggleBookmarkLocation = (locationId: string): string[] => {
     bookmarks.push(locationId);
   }
   prefs.bookmarkedLandmarks = bookmarks;
-  saveUserPreferences(prefs);
+  saveUserPreferences(prefs, email);
   return bookmarks;
 };
 
@@ -522,27 +569,41 @@ export const generateWeeklyHabitRecords = (): DayStudyRecord[] => {
     const d = new Date(today.getTime() - i * 86400000);
     const dayLabel = days[d.getDay()];
     const dateStr = d.toISOString().split('T')[0];
-    
-    // Base simulation values enhanced by actual progress
-    const isToday = i === 0;
-    const baseMinutes = isToday ? 15 : Math.floor(10 + ((d.getDate() * 7) % 25));
-    const baseQuestions = isToday ? 4 : Math.floor(2 + ((d.getDate() * 3) % 6));
 
     records.push({
       day: dayLabel,
       date: dateStr,
-      minutes: baseMinutes,
-      questionsCount: baseQuestions,
-      completedGoal: baseMinutes >= 15
+      minutes: 0,
+      questionsCount: 0,
+      completedGoal: false
     });
   }
 
   return records;
 };
 
-export const getLearningHabits = (): LearningHabits => {
+export const getDefaultLearningHabits = (): LearningHabits => ({
+  weeklyRecords: generateWeeklyHabitRecords(),
+  totalSessionsCompleted: 0,
+  longestDailyStreak: 0,
+  currentDailyStreak: 0,
+  averageSessionDurationMinutes: 0,
+  mostActiveTimeOfDay: 'Chưa có phiên học',
+  categoryQuestsCompleted: {
+    architecture: 0,
+    history: 0,
+    cuisine: 0,
+    culture: 0,
+    traditional_art: 0
+  },
+  quizAccuracyRate: 0,
+  lastStudyTimestamp: new Date().toISOString()
+});
+
+export const getLearningHabits = (email?: string): LearningHabits => {
+  const key = getHabitsStorageKey(email);
   try {
-    const raw = localStorage.getItem(HABITS_STORAGE_KEY);
+    const raw = localStorage.getItem(key) || localStorage.getItem('saigon_heritage_learning_habits_v3');
     if (raw) {
       return JSON.parse(raw);
     }
@@ -550,48 +611,65 @@ export const getLearningHabits = (): LearningHabits => {
     console.warn('Could not read learning habits:', e);
   }
 
-  const defaultHabits: LearningHabits = {
-    weeklyRecords: generateWeeklyHabitRecords(),
-    totalSessionsCompleted: 12,
-    longestDailyStreak: 7,
-    currentDailyStreak: 3,
-    averageSessionDurationMinutes: 18,
-    mostActiveTimeOfDay: '19:30 - 21:00 (Buổi Tối Tĩnh Lặng)',
-    categoryQuestsCompleted: {
-      architecture: 4,
-      history: 3,
-      cuisine: 2,
-      culture: 3,
-      traditional_art: 1
-    },
-    quizAccuracyRate: 88,
-    lastStudyTimestamp: new Date().toISOString()
-  };
-
-  saveLearningHabits(defaultHabits);
+  const defaultHabits = getDefaultLearningHabits();
+  saveLearningHabits(defaultHabits, email);
   return defaultHabits;
 };
 
-export const saveLearningHabits = (habits: LearningHabits): void => {
+export const saveLearningHabits = (habits: LearningHabits, email?: string): void => {
+  const key = getHabitsStorageKey(email);
   try {
-    localStorage.setItem(HABITS_STORAGE_KEY, JSON.stringify(habits));
+    localStorage.setItem(key, JSON.stringify(habits));
+    localStorage.setItem('saigon_heritage_learning_habits_v3', JSON.stringify(habits));
   } catch (e) {
     console.warn('Could not save learning habits:', e);
   }
 };
 
+// Explicitly reset all preferences and learning habits for a clean fresh slate
+export const resetLearningHabitsAndPreferences = (email?: string): { preferences: UserPreferences; habits: LearningHabits } => {
+  const targetEmail = email || getActiveSessionEmail();
+  const prefKey = getPreferencesStorageKey(targetEmail || undefined);
+  const habitKey = getHabitsStorageKey(targetEmail || undefined);
+  const memKey = getMemoryStorageKey(targetEmail || undefined);
+
+  try {
+    // Clear targeted keys and legacy versions
+    localStorage.removeItem(prefKey);
+    localStorage.removeItem(habitKey);
+    localStorage.removeItem(memKey);
+    localStorage.removeItem('saigon_heritage_user_preferences_v3');
+    localStorage.removeItem('saigon_heritage_learning_habits_v3');
+    localStorage.removeItem('saigon_heritage_user_preferences_v2');
+    localStorage.removeItem('saigon_heritage_learning_habits_v2');
+    localStorage.removeItem('saigon_heritage_learning_memory_v2');
+  } catch (e) {
+    console.warn('Could not clear storage keys:', e);
+  }
+
+  const cleanPrefs = getDefaultPreferences();
+  const cleanHabits = getDefaultLearningHabits();
+
+  saveUserPreferences(cleanPrefs, targetEmail || undefined);
+  saveLearningHabits(cleanHabits, targetEmail || undefined);
+
+  return { preferences: cleanPrefs, habits: cleanHabits };
+};
+
 // Sync learning progress to backend server
 export const syncProgressToBackend = async (userProfile: any): Promise<boolean> => {
   try {
+    const targetEmail = userProfile.googleEmail || userProfile.email || getActiveSessionEmail();
     const response = await fetch('/api/user/save-progress', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         userProfile: {
           ...userProfile,
-          preferences: getUserPreferences(),
-          learningHabits: getLearningHabits(),
-          learningMemory: getLearningMemory()
+          email: targetEmail,
+          preferences: getUserPreferences(targetEmail),
+          learningHabits: getLearningHabits(targetEmail),
+          learningMemory: getLearningMemory(targetEmail)
         }
       })
     });

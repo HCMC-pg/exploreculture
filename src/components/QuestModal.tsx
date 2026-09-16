@@ -110,9 +110,6 @@ export const QuestModal: React.FC<QuestModalProps> = ({
   // Active Traveler Buffs
   const buffs = getActiveTravelerBuffs();
 
-  // Filtered Options with Flashlight Buff (automatically remove 1 wrong option)
-  const [filteredWrongOption, setFilteredWrongOption] = useState<string | null>(null);
-
   // Derive active steps based on tier filter
   const allSteps = quest.steps || [];
   
@@ -187,18 +184,6 @@ export const QuestModal: React.FC<QuestModalProps> = ({
     if (currentStep) {
       setIsStarred(memory.starredQuestions.includes(currentStep.id));
       setStepNote(memory.studyNotes[currentStep.id] || '');
-
-      // Apply Flashlight buff: filter out 1 wrong choice if multiple choice
-      if (buffs.filterWrongOptionBonus && currentStep.puzzleData.options && currentStep.puzzleData.options.length > 2) {
-        const wrongOpts = currentStep.puzzleData.options.filter(
-          o => String(o).trim().toLowerCase() !== String(currentStep.puzzleData.correctAnswer).trim().toLowerCase()
-        );
-        if (wrongOpts.length > 0) {
-          setFilteredWrongOption(wrongOpts[0]);
-        }
-      } else {
-        setFilteredWrongOption(null);
-      }
     }
   }, [currentStepIndex, activeTierFilter]);
 
@@ -686,37 +671,68 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 </div>
               )}
 
-              {/* Cultural Lore & Clue Verse Box */}
+              {/* Cultural Lore & Clue Verse Box - ONLY REVEAL WHEN PLAYER FAILS >= 2 TIMES */}
               {currentStep.clueVerse && (
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/40 via-stone-900/80 to-stone-950 border-2 border-amber-500/40 relative overflow-hidden shadow-2xl">
-                  <div className="absolute -right-4 -bottom-4 text-amber-500/10 pointer-events-none">
-                    <BookOpen className="w-28 h-28" />
-                  </div>
-                  <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
-                    <div className="flex items-center gap-2">
-                      <span className="px-2 py-0.5 rounded-md bg-amber-500/20 text-amber-300 font-mono text-[10px] font-black uppercase tracking-wider border border-amber-500/40">
-                        Cổ Thư Tuyệt Mật
-                      </span>
-                      <p className="text-[11px] font-bold text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
-                        <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                        Manh Mối Thi Ca Ẩn Dụ Nam Bộ:
+                (() => {
+                  const currentStepFails = wrongAttemptsCount[currentStepIndex] || 0;
+                  const isClueVerseUnlocked = currentStepFails >= 2;
+
+                  if (!isClueVerseUnlocked) {
+                    return (
+                      <div className="p-3.5 rounded-2xl bg-stone-900/70 border border-stone-800 flex items-center justify-between gap-3 text-xs animate-fadeIn">
+                        <div className="flex items-center gap-2.5 text-stone-400">
+                          <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                            <Lock className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-stone-200 flex items-center gap-1.5">
+                              <span>📜 Cổ Thư Tuyệt Mật (Mật Thư Ẩn Dụ)</span>
+                              <span className="text-[10px] font-mono px-2 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                                Đang Phong Ấn
+                              </span>
+                            </p>
+                            <p className="text-[11px] text-stone-400 mt-0.5">
+                              Tự suy luận để đạt danh hiệu Lữ Khách xuất sắc! Mật thư và gợi ý Cố Vấn Ba Son sẽ tự động giải phong ấn nếu bạn trả lời sai từ 2 lần (Hiện tại: {currentStepFails}/2 lần).
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-amber-950/40 via-stone-900/80 to-stone-950 border-2 border-amber-500/40 relative overflow-hidden shadow-2xl animate-fadeIn">
+                      <div className="absolute -right-4 -bottom-4 text-amber-500/10 pointer-events-none">
+                        <BookOpen className="w-28 h-28" />
+                      </div>
+                      <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+                        <div className="flex items-center gap-2">
+                          <span className="px-2 py-0.5 rounded-md bg-emerald-500/20 text-emerald-300 font-mono text-[10px] font-black uppercase tracking-wider border border-emerald-500/40 flex items-center gap-1">
+                            <Unlock className="w-3 h-3 text-emerald-400" />
+                            Mật Thư Đã Giải Mã ({currentStepFails} lần thử)
+                          </span>
+                          <p className="text-[11px] font-bold text-amber-300 uppercase tracking-widest flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                            Manh Mối Thi Ca Ẩn Dụ Nam Bộ:
+                          </p>
+                        </div>
+                        <button
+                          onClick={toggleNarration}
+                          className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-900/80 border border-amber-500/30 transition-colors"
+                        >
+                          <Volume2 className="w-3 h-3 text-amber-400" />
+                          {isAudioNarrating ? 'Tắt đọc cổ thư' : 'Ngâm cổ thư'}
+                        </button>
+                      </div>
+                      <p className="font-['Cinzel',serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-3 border-l-2 border-amber-400/80 py-0.5">
+                        "{currentStep.clueVerse}"
+                      </p>
+                      <p className="text-[10px] text-stone-400 mt-2 italic flex items-center gap-1">
+                        <span>* Cổ thư chứa mật ngữ khảo cứu. Hãy đối chiếu các chi tiết hoa văn, niên biểu và kiến trúc tại di tích để phá giải.</span>
                       </p>
                     </div>
-                    <button
-                      onClick={toggleNarration}
-                      className="text-[10px] text-amber-300 hover:text-amber-200 flex items-center gap-1 px-2.5 py-1 rounded-lg bg-stone-900/80 border border-amber-500/30 transition-colors"
-                    >
-                      <Volume2 className="w-3 h-3 text-amber-400" />
-                      {isAudioNarrating ? 'Tắt đọc cổ thư' : 'Ngâm cổ thư'}
-                    </button>
-                  </div>
-                  <p className="font-['Cinzel',serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-3 border-l-2 border-amber-400/80 py-0.5">
-                    "{currentStep.clueVerse}"
-                  </p>
-                  <p className="text-[10px] text-stone-400 mt-2 italic flex items-center gap-1">
-                    <span>* Cổ thư chứa mật ngữ khảo cứu. Hãy đối chiếu các chi tiết hoa văn, niên biểu và kiến trúc tại di tích để phá giải.</span>
-                  </p>
-                </div>
+                  );
+                })()
               )}
 
               {/* Story Prompt Context */}
@@ -739,29 +755,29 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 </div>
 
                 {/* PUZZLE INTERFACES */}
-                {/* 1. Multiple Choice / True-False */}
+                {/* 1. Multiple Choice / True-False - ANY OPTION IS SELECTABLE */}
                 {(currentStep.puzzleType === 'multiple_choice' || currentStep.puzzleType === 'true_false') && (
                   <div className="space-y-2 pt-2">
                     {currentStep.puzzleData.options?.map((option, idx) => {
                       const isSelected = selectedOption === option;
-                      const isFilteredWrong = filteredWrongOption === option;
 
                       return (
                         <button
                           key={idx}
                           onClick={() => {
-                            if (!isAnswerSubmitted) {
+                            if (!(isAnswerSubmitted && isCorrect)) {
                               sound.playClick();
                               setSelectedOption(option);
+                              if (isAnswerSubmitted && !isCorrect) {
+                                setIsAnswerSubmitted(false);
+                              }
                             }
                           }}
-                          disabled={isAnswerSubmitted || isFilteredWrong}
-                          className={`w-full p-3 rounded-xl text-left text-xs sm:text-sm font-medium transition-all flex items-center justify-between border ${
-                            isFilteredWrong
-                              ? 'opacity-30 line-through bg-stone-950 border-stone-800 cursor-not-allowed'
-                              : isSelected
-                                ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md'
-                                : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700 hover:bg-stone-850'
+                          disabled={isAnswerSubmitted && isCorrect}
+                          className={`w-full p-3 rounded-xl text-left text-xs sm:text-sm font-medium transition-all flex items-center justify-between border cursor-pointer ${
+                            isSelected
+                              ? 'bg-amber-500/20 border-amber-400 text-amber-200 shadow-md ring-1 ring-amber-400/40'
+                              : 'bg-stone-900 border-stone-800 text-stone-300 hover:border-stone-700 hover:bg-stone-850'
                           }`}
                         >
                           <div className="flex items-center gap-3">
@@ -977,37 +993,30 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 )}
               </div>
 
-              {/* SMART AI HINT ACCORDION - STRICT RULE: ONLY SHOW WHEN PLAYER FAILS MULTIPLE TIMES OR EXPLICITLY REQUESTS */}
+              {/* SMART AI HINT ACCORDION - STRICT RULE: ONLY SHOW WHEN PLAYER FAILS >= 2 TIMES */}
               {(() => {
                 const currentFails = wrongAttemptsCount[currentStepIndex] || 0;
-                const hasUserRequested = !!userRequestedHintSteps[currentStepIndex];
-                const isHintEligible = currentFails >= 2 || hasUserRequested;
+                const isHintEligible = currentFails >= 2;
 
                 if (!isHintEligible) {
                   return (
-                    <div className="p-3 rounded-2xl bg-stone-900/80 border border-stone-800/90 flex items-center justify-between gap-3 animate-fadeIn">
-                      <div className="flex items-center gap-2.5 text-xs text-stone-300">
-                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                          <Sparkles className="w-4 h-4" />
+                    <div className="p-3.5 rounded-2xl bg-stone-900/60 border border-stone-800/80 flex items-center justify-between gap-3 text-xs animate-fadeIn">
+                      <div className="flex items-center gap-2.5 text-stone-400">
+                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 shrink-0">
+                          <Lock className="w-4 h-4" />
                         </div>
                         <div>
-                          <span className="font-bold text-stone-200 block">Cố Vấn Ba Son Đang Đồng Hành</span>
-                          <span className="text-[11px] text-stone-400">
-                            Tự suy luận nhận tối đa LP. Gợi ý sẽ tự động kích hoạt khi trả lời sai 2 lần, hoặc bạn có thể bấm yêu cầu.
-                          </span>
+                          <p className="font-bold text-stone-200 flex items-center gap-1.5">
+                            <span>Gợi Ý Cố Vấn Ba Son</span>
+                            <span className="text-[10px] font-mono px-2 py-0.2 rounded bg-stone-800 text-stone-400 border border-stone-700">
+                              Đang Khóa ({currentFails}/2 lần thử)
+                            </span>
+                          </p>
+                          <p className="text-[11px] text-stone-400 mt-0.5">
+                            Gợi ý 3 cấp độ cùng Cổ thư sẽ tự động mở để trợ giúp nếu bạn trả lời sai từ 2 lần.
+                          </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          sound.playClick();
-                          setUserRequestedHintSteps(prev => ({ ...prev, [currentStepIndex]: true }));
-                          setIsHintAccordionOpen(true);
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/40 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95"
-                      >
-                        <HelpCircle className="w-4 h-4 text-amber-400" />
-                        <span>Yêu Cầu Gợi Ý</span>
-                      </button>
                     </div>
                   );
                 }
@@ -1021,9 +1030,7 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                       <span className="font-bold flex items-center gap-2">
                         <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
                         <span className="text-amber-300 font-extrabold">
-                          {currentFails >= 2 
-                            ? `Gợi Ý Cố Vấn Ba Son (Kích hoạt do đã thử ${currentFails} lần)` 
-                            : 'Gợi Ý Cố Vấn Ba Son (Mở theo yêu cầu của bạn)'}
+                          Gợi Ý Cố Vấn Ba Son (Đã mở sau {currentFails} lần thử)
                         </span>
                       </span>
                       <div className="flex items-center gap-2">
@@ -1129,8 +1136,8 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                     {!isCorrect && (
                       <span className="text-[11px] font-mono text-rose-300 bg-rose-950/50 px-2 py-0.5 rounded border border-rose-500/30">
                         {(wrongAttemptsCount[currentStepIndex] || 1) >= 2 
-                          ? '💡 Cố Vấn Ba Son đã kích hoạt gợi ý hỗ trợ bên trên!' 
-                          : '💡 Bạn có thể bấm "Yêu Cầu Gợi Ý" hoặc thử sức lại'}
+                          ? '💡 Mật thư cổ & Cố Vấn Ba Son đã kích hoạt gợi ý hỗ trợ bên trên!' 
+                          : '💡 Thử lại hoặc trả lời sai 2 lần để mở khóa Mật thư & Gợi ý Cố Vấn'}
                       </span>
                     )}
                   </div>

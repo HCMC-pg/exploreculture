@@ -1139,6 +1139,30 @@ app.post('/api/user/save-progress', (req, res) => {
   }
 });
 
+// Explicit endpoint to reset all scores back to 0
+app.post('/api/user/reset-progress', (req, res) => {
+  try {
+    const { userId, email } = req.body || {};
+    if (userId && userProgressStore[userId]) {
+      userProgressStore[userId].lpPoints = 0;
+      userProgressStore[userId].completedQuests = [];
+      userProgressStore[userId].badgesUnlocked = [];
+      userProgressStore[userId].studyHours = 0;
+      userProgressStore[userId].studyMinutes = 0;
+    }
+    if (email && userProgressStore[email.toLowerCase()]) {
+      userProgressStore[email.toLowerCase()].lpPoints = 0;
+      userProgressStore[email.toLowerCase()].completedQuests = [];
+      userProgressStore[email.toLowerCase()].badgesUnlocked = [];
+      userProgressStore[email.toLowerCase()].studyHours = 0;
+      userProgressStore[email.toLowerCase()].studyMinutes = 0;
+    }
+    res.json({ success: true, message: 'Đã thiết lập lại toàn bộ điểm số về 0 LP' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 // Get user progress and unified learning analytics by email or ID
 app.get('/api/user/get-progress/:identifier', (req, res) => {
   const { identifier } = req.params;
@@ -1480,7 +1504,7 @@ app.post('/api/auth/register', (req, res) => {
     avatar: avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
     isLoggedIn: true,
     authProvider: 'custom',
-    lpPoints: 500, // Starter bonus for new registration
+    lpPoints: 0, // Reset all scores to 0 LP as requested
     lastSyncedAt: new Date().toISOString()
   };
   res.json({ success: true, user, message: 'Đăng ký tài khoản thành công' });

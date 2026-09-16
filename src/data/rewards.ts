@@ -1,5 +1,22 @@
 import { RewardItem } from '../types';
 
+// Bespoke cultural heritage reward images generated & curated
+import caPheVotImg from '../assets/images/saigon_ca_phe_vot_1789556146742.jpg';
+import khanRanImg from '../assets/images/khan_ran_nam_bo_1789556165507.jpg';
+import waterbusImg from '../assets/images/saigon_waterbus_cruise_1789556181071.jpg';
+import kyLanSealImg from '../assets/images/ky_lan_an_chuong_1789556197909.jpg';
+import giaDinhBookImg from '../assets/images/gia_dinh_book_1789556212793.jpg';
+import nonTaiBeoImg from '../assets/images/non_tai_beo_1789556542846.jpg';
+import hopOnBusImg from '../assets/images/hop_on_bus_1789556556493.jpg';
+import nuocMamPhuocHaiImg from '../assets/images/nuoc_mam_phuoc_hai_1789556576704.jpg';
+import huyChuongVangImg from '../assets/images/huy_chuong_vang_1789556591599.jpg';
+import thuyenBuomDemImg from '../assets/images/thuyen_buom_dem_1789556608925.jpg';
+import buuDienHcmImg from '../assets/images/buu_dien_tphcm_1787006736630.jpg';
+import duongSachImg from '../assets/images/duong_sach_hcm_1787006776932.jpg';
+import cuChiTunnelsImg from '../assets/images/cu_chi_tunnels_ai_1787006309265.jpg';
+import dinhDocLapImg from '../assets/images/dinh_doc_lap_ai_1787006275211.jpg';
+import benNhaRongImg from '../assets/images/ben_nha_rong_ai_1787006259916.jpg';
+
 export const REWARDS: RewardItem[] = [
   // =========================================================================
   // TIER 1: SƠ CẤP - LỮ KHÁCH NHẬP MÔN (150 - 350 LP | 1 - 2 HUY HIỆU)
@@ -18,7 +35,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Áp dụng tại các chi nhánh đối tác ẩm thực di sản liên kết. Xuất trình mã voucher khi thanh toán.',
     expiryDays: 45,
     remainingQuota: 120,
-    image: 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80',
+    image: caPheVotImg,
     valueVND: '85.000 VNĐ'
   },
   {
@@ -35,7 +52,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Sản phẩm dệt mộc tự nhiên không hóa chất phẩm màu công nghiệp, an toàn cho da.',
     expiryDays: 60,
     remainingQuota: 150,
-    image: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=600&q=80',
+    image: khanRanImg,
     valueVND: '150.000 VNĐ'
   },
   {
@@ -52,7 +69,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Áp dụng cho 01 người lớn tại Bến Bạch Đằng hoặc Bến Bình An. Xuất trình mã QR tại quầy vé trước 15 phút.',
     expiryDays: 45,
     remainingQuota: 100,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=600&q=80',
+    image: waterbusImg,
     valueVND: '66.000 VNĐ'
   },
   {
@@ -69,7 +86,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Bảo hành đường may 12 tháng. Có thể đổi size tại các điểm trạm du lịch liên kết.',
     expiryDays: 60,
     remainingQuota: 80,
-    image: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?auto=format&fit=crop&w=600&q=80',
+    image: nonTaiBeoImg,
     valueVND: '190.000 VNĐ'
   },
   {
@@ -86,7 +103,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Thẻ có giá trị trong 30 ngày kể từ ngày kích hoạt. Được phép chụp ảnh lưu niệm không dùng đèn flash.',
     expiryDays: 60,
     remainingQuota: 85,
-    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+    image: buuDienHcmImg,
     valueVND: '120.000 VNĐ'
   },
   {
@@ -103,7 +120,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Được khắc tên người chơi miễn phí lên bìa sổ. Nhận tại Đường Sách Nguyễn Văn Bình hoặc chuyển phát nhanh.',
     expiryDays: 60,
     remainingQuota: 90,
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    image: duongSachImg,
     valueVND: '250.000 VNĐ'
   },
 
@@ -124,7 +141,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Lên xuống tự do tại bất kỳ trạm dừng nào trong vòng 4 tiếng. Áp dụng tất cả các ngày trong tuần.',
     expiryDays: 60,
     remainingQuota: 60,
-    image: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=600&q=80',
+    image: hopOnBusImg,
     valueVND: '150.000 VNĐ'
   },
   {
@@ -141,7 +158,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Giao hàng tận nơi miễn phí hoặc nhận trực tiếp tại Trung tâm Du khách Bến Bạch Đằng. Kèm hộp kraft quà tặng cao cấp.',
     expiryDays: 90,
     remainingQuota: 45,
-    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80',
     valueVND: '320.000 VNĐ'
   },
   {
@@ -158,7 +175,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Hộp quà 2 chai thủy tinh 500ml sang trọng, giao tận nơi miễn phí toàn quốc.',
     expiryDays: 120,
     remainingQuota: 40,
-    image: 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=600&q=80',
+    image: nuocMamPhuocHaiImg,
     valueVND: '240.000 VNĐ'
   },
   {
@@ -175,7 +192,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Kèm cáp sạc Type-C nhanh và dây đeo cổ tay. Bảo hành 12 tháng chính hãng.',
     expiryDays: 90,
     remainingQuota: 35,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=600&q=80',
+    image: cuChiTunnelsImg,
     valueVND: '310.000 VNĐ'
   },
   {
@@ -192,7 +209,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Bảo hành kim từ tính 24 tháng. Kèm hộp gỗ nhung sang trọng.',
     expiryDays: 90,
     remainingQuota: 30,
-    image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=800&q=80',
     valueVND: '320.000 VNĐ'
   },
   {
@@ -209,7 +226,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Kèm bao da bảo vệ thấu kính và bộ 10 bản dập văn bia di tích Quốc gia đặc biệt.',
     expiryDays: 90,
     remainingQuota: 25,
-    image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80',
     valueVND: '350.000 VNĐ'
   },
   {
@@ -226,13 +243,12 @@ export const REWARDS: RewardItem[] = [
     terms: 'Kèm thẻ chứng nhận sưu tầm phiên bản giới hạn có đóng dấu nổi bảo an.',
     expiryDays: 120,
     remainingQuota: 20,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80',
     valueVND: '450.000 VNĐ'
   },
 
   // =========================================================================
   // TIER 3: ĐẠI SƯ HUYỀN THOẠI & ĐỘC BẢN (1,500 - 3,500 LP | 10 - 21 HUY HIỆU)
-  // Mang tính thử thách cao độ, số lượng giới hạn, vinh danh tột đỉnh
   // =========================================================================
   {
     id: 'rew_master_ky_lan_seal',
@@ -250,7 +266,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Chế tác thủ công riêng biệt theo thông tin của người chơi trong 5-7 ngày làm việc. Chuyển phát bảo đảm tận tay có mã định danh.',
     expiryDays: 180,
     remainingQuota: 15,
-    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80',
+    image: kyLanSealImg,
     valueVND: '1.200.000 VNĐ'
   },
   {
@@ -269,7 +285,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Vinh danh trang trọng trên Bảng Vàng Danh Dự Toàn Quốc của ứng dụng và gửi kỷ vật về tận nhà.',
     expiryDays: 180,
     remainingQuota: 12,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
+    image: huyChuongVangImg,
     valueVND: '1.800.000 VNĐ'
   },
   {
@@ -288,7 +304,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Số lượng chỉ 50 ấn bản trên toàn cầu. Kèm chữ ký tặng của Chủ tịch Hội Sử Học TP.HCM.',
     expiryDays: 180,
     remainingQuota: 8,
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    image: giaDinhBookImg,
     valueVND: '2.500.000 VNĐ'
   },
   {
@@ -307,7 +323,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Vé áp dụng cho 02 người. Diễn ra định kỳ vào tối thứ Bảy tuần thứ 2 mỗi tháng. Cần đặt lịch trước 7 ngày.',
     expiryDays: 120,
     remainingQuota: 6,
-    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+    image: dinhDocLapImg,
     valueVND: '2.000.000 VNĐ'
   },
   {
@@ -326,7 +342,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Bao gồm trọn gói dịch vụ cho 02 khách, đón trả tại Bến Bạch Đằng. Voucher có giá trị 6 tháng.',
     expiryDays: 180,
     remainingQuota: 5,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=600&q=80',
+    image: thuyenBuomDemImg,
     valueVND: '3.600.000 VNĐ'
   },
   {
@@ -345,7 +361,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Thẻ cá nhân hóa không thể chuyển nhượng. Được công nhận chính thức bởi Ban Điều Hành Mạng Lưới Di Sản.',
     expiryDays: 365,
     remainingQuota: 3,
-    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80',
+    image: benNhaRongImg,
     valueVND: 'Vô Giá (Đặc Quyền Trọn Đời)'
   }
 ];

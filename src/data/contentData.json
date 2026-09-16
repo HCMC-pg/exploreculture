@@ -1,0 +1,177 @@
+{
+  "appName": "Sài Gòn Kỳ Bí - Khám Phá Di Sản Nam Bộ",
+  "appDescription": "Trò chơi phiêu lưu khám phá văn hóa di sản TP. Hồ Chí Minh, Bình Dương và Bà Rịa - Vũng Tàu với bản đồ 3D tương tác số hóa, hệ thống nhiệm vụ thu thập huy hiệu, AI Cố vấn Ba Son giải mã mọi câu hỏi và diễn đàn cộng đồng.",
+  "rewards": [
+    {
+      "id": "rew_coffee_voucher",
+      "name": "Voucher Thưởng Thức Cà Phê Vợt Sài Gòn & Bánh Bèo Bì Bình Dương",
+      "image": "./assets/images/saigon_ca_phe_vot_1789556146742.jpg",
+      "category": "cuisine",
+      "tier": "apprentice",
+      "costLP": 180,
+      "partner": "Cà Phê Vợt Di Sản Hơn 70 Năm Chú Ba & Bánh Bèo Bì Mỹ Liên"
+    },
+    {
+      "id": "rew_gear_scarf",
+      "name": "Khăn Rằn Nam Bộ Dệt Thủ Công Sợi Bông Tự Nhiên (100% Sợi Cotton Miệt Vườn)",
+      "image": "./assets/images/khan_ran_nam_bo_1789556165507.jpg",
+      "category": "souvenir",
+      "tier": "apprentice",
+      "costLP": 220,
+      "partner": "Làng Dệt Khăn Rằn Truyền Thống Nam Bộ"
+    },
+    {
+      "id": "rew_waterbus",
+      "name": "Vé Saigon Waterbus Hoàng Hôn Ngắm Bến Nhà Rồng & Sông Sài Gòn (Khứ Hồi)",
+      "image": "./assets/images/saigon_waterbus_cruise_1789556181071.jpg",
+      "category": "ticket",
+      "tier": "apprentice",
+      "costLP": 250,
+      "partner": "Saigon Waterbus & Sở Du Lịch TP.HCM"
+    },
+    {
+      "id": "rew_gear_bucket_hat",
+      "name": "Nón Tai Bèo Thám Hiểm Rừng Sác & Miệt Vườn (Vải Kaki Cotton UPF 50+)",
+      "image": "./assets/images/non_tai_beo_1789556542846.jpg",
+      "category": "souvenir",
+      "tier": "apprentice",
+      "costLP": 280,
+      "partner": "Câu Lạc Bộ Thám Hiểm Rừng Sác & Đồng Bằng Nam Bộ"
+    },
+    {
+      "id": "rew_museum_pass",
+      "name": "Thẻ Thông Hành Trọn Gói 3 Bảo Tàng Di Sản TP.HCM (Lịch Sử, Mỹ Thuật, Thành Phố)",
+      "image": "./assets/images/buu_dien_tphcm_1787006736630.jpg",
+      "category": "ticket",
+      "tier": "apprentice",
+      "costLP": 300,
+      "partner": "Sở Văn Hóa & Thể Thao TP.HCM"
+    },
+    {
+      "id": "rew_gear_leather_journal",
+      "name": "Sổ Tay Hành Trình Bìa Da Khắc Tên Kèm Bút Tre Tự Nhiên & Bộ Tem Di Sản",
+      "image": "./assets/images/duong_sach_hcm_1787006776932.jpg",
+      "category": "souvenir",
+      "tier": "apprentice",
+      "costLP": 350,
+      "partner": "Nhà Xuất Bản Văn Hóa Phương Nam & Phố Sách Nguyễn Văn Bình"
+    },
+    {
+      "id": "rew_hop_on_bus",
+      "name": "Vé Xe Buýt 2 Tầng City Sightseeing Sài Gòn (4 Giờ Khám Phá Toàn Cảnh)",
+      "image": "./assets/images/hop_on_bus_1789556556493.jpg",
+      "category": "ticket",
+      "tier": "challenger",
+      "costLP": 500,
+      "partner": "Vietnam Sightseeing City Tour TP.HCM"
+    },
+    {
+      "id": "rew_gear_tumbler",
+      "name": "Bình Giữ Nhiệt Lữ Khách Phương Nam 750ml (Inox 304 Khắc Laser Tọa Độ Di Sản)",
+      "image": "https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=800&q=80",
+      "category": "souvenir",
+      "tier": "challenger",
+      "costLP": 580,
+      "partner": "Xưởng Chế Tác Trang Bị Du Hành Di Sản Phương Nam"
+    },
+    {
+      "id": "rew_phuoc_hai_fish_sauce",
+      "name": "Bộ 02 Chai Nước Mắm Nhĩ Cá Cơm Than Phước Hải Thượng Hạng 40° Đạm (Ủ Thùng Gỗ 12 Tháng)",
+      "image": "./assets/images/nuoc_mam_phuoc_hai_1789556576704.jpg",
+      "category": "cuisine",
+      "tier": "challenger",
+      "costLP": 620,
+      "partner": "Hợp Tác Xã Nước Mắm Truyền Thống Phước Hải"
+    },
+    {
+      "id": "rew_gear_flashlight",
+      "name": "Đèn Pin Thám Hiểm Địa Đạo & Hang Động Hợp Kim Nhôm IPX6 (1000 Lumens Sạc Type-C)",
+      "image": "./assets/images/cu_chi_tunnels_ai_1787006309265.jpg",
+      "category": "souvenir",
+      "tier": "challenger",
+      "costLP": 680,
+      "partner": "Thiết Bị Thám Hiểm Địa Đạo & Hang Động Phương Nam"
+    },
+    {
+      "id": "rew_gear_compass",
+      "name": "La Bàn Đồng Thau Cơ Học Du Khách Phương Nam Kèm Dây Đeo Da Cổ Điển",
+      "image": "https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=800&q=80",
+      "category": "souvenir",
+      "tier": "challenger",
+      "costLP": 750,
+      "partner": "CLB Thám Hiểm Hàng Hải & Địa Lý Di Sản Phương Nam"
+    },
+    {
+      "id": "rew_gear_magnifier",
+      "name": "Kính Lúp Khảo Cổ Khung Hợp Kim Đồng Thau Thấu Kính 10X Kèm 10 Bản Dập Cổ Văn",
+      "image": "https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80",
+      "category": "souvenir",
+      "tier": "challenger",
+      "costLP": 820,
+      "partner": "Hội Khảo Cổ & Sưu Tầm Cổ Vật Phương Nam"
+    },
+    {
+      "id": "rew_gear_pin_set",
+      "name": "Bộ 05 Huy Hiệu Kim Loại Cổ Điển Mạ Vàng 18K Di Sản 3 Tỉnh Phương Nam",
+      "image": "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+      "category": "honor",
+      "tier": "challenger",
+      "costLP": 950,
+      "partner": "Xưởng Đúc Kim Hoàn Mỹ Nghệ Sài Gòn & Ban Quản Lý Di Tích"
+    },
+    {
+      "id": "rew_master_ky_lan_seal",
+      "name": "Kỳ Lân Ấn Chương Ba Son Đúc Đồng Thau Nguyên Khối (Khắc Laser Họ Tên Riêng)",
+      "image": "./assets/images/ky_lan_an_chuong_1789556197909.jpg",
+      "category": "honor",
+      "tier": "legendary",
+      "costLP": 1600,
+      "partner": "Xưởng Đúc Đồng Mỹ Nghệ Cổ Truyền Ba Son & Viện Nghiên Cứu Di Sản Nam Bộ"
+    },
+    {
+      "id": "rew_master_gold_medal",
+      "name": "Huy Chương Đại Sư Di Sản Phương Nam Đúc Đồng Mạ Vàng 24K Kèm Chứng Thư Sử Học",
+      "image": "./assets/images/huy_chuong_vang_1789556591599.jpg",
+      "category": "honor",
+      "tier": "legendary",
+      "costLP": 2000,
+      "partner": "Viện Khoa Học Xã Hội Vùng Nam Bộ & Bảo Tàng Lịch Sử TP.HCM"
+    },
+    {
+      "id": "rew_master_gia_dinh_book",
+      "name": "Bộ Sách Da Phục Dựng Gia Định Thành Thông Chí 1820 (Đóng Bìa Thủ Công Giới Hạn 50 Bản)",
+      "image": "./assets/images/gia_dinh_book_1789556212793.jpg",
+      "category": "souvenir",
+      "tier": "legendary",
+      "costLP": 2500,
+      "partner": "Nhà Xuất Bản Văn Hóa - Văn Nghệ & Hội Khoa Học Lịch Sử TP.HCM"
+    },
+    {
+      "id": "rew_master_night_museum_vip",
+      "name": "Vé VIP Trải Nghiệm Đêm Bảo Tàng Lịch Sử & Đàm Đạo Cùng Chuyên Gia Khảo Cổ",
+      "image": "./assets/images/dinh_doc_lap_ai_1787006275211.jpg",
+      "category": "ticket",
+      "tier": "legendary",
+      "costLP": 2800,
+      "partner": "Bảo Tàng Lịch Sử TP.HCM & Trung Tâm Khảo Cổ Học Nam Bộ"
+    },
+    {
+      "id": "rew_master_sailing_yacht",
+      "name": "Chuyến Du Khảo Thuyền Buồm Di Sản Sông Sài Gòn Đêm (Dành Cho 2 Người & Thưởng Trà Sen)",
+      "image": "./assets/images/thuyen_buom_dem_1789556608925.jpg",
+      "category": "ticket",
+      "tier": "legendary",
+      "costLP": 3200,
+      "partner": "Hãng Du Thuyền Cổ Điển Sài Gòn Heritage Cruise & Sở Du Lịch"
+    },
+    {
+      "id": "rew_master_lifetime_pass",
+      "name": "Thẻ Thường Trú Danh Dự Di Sản Phương Nam (Đặc Quyền Miễn Phí Trọn Đời 21 Di Tích)",
+      "image": "./assets/images/ben_nha_rong_ai_1787006259916.jpg",
+      "category": "honor",
+      "tier": "legendary",
+      "costLP": 3500,
+      "partner": "Liên Minh Di Sản Văn Hóa Nam Bộ & Cục Di Sản Văn Hóa"
+    }
+  ]
+}

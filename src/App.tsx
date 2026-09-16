@@ -29,22 +29,28 @@ import { HistoricalThemeModal } from './components/HistoricalThemeModal';
 import { AITourGuideWidget } from './components/AITourGuideWidget';
 import { getSavedItinerary, saveActiveItinerary } from './utils/itineraryEngine';
 import { sound } from './utils/audio';
+import { 
+  setActiveSessionEmail, 
+  getActiveSessionEmail, 
+  resetLearningHabitsAndPreferences, 
+  sanitizeEmailKey 
+} from './utils/learningStorage';
 
-const STORAGE_KEY = 'saigon_heritage_explorer_user_v3';
+const STORAGE_KEY = 'saigon_heritage_explorer_user_v5';
 
 export default function App() {
   // Navigation & Atmosphere State
   const [activeTab, setActiveTab] = useState<'map' | 'quests' | 'badges' | 'forum' | 'rewards'>('map');
   const [isMuted, setIsMuted] = useState<boolean>(false);
 
-  // User Profile State (persisted locally with 0 starting points)
+  // User Profile State (persisted locally per Gmail with clean 0 starting points)
   const [user, setUser] = useState<UserProfile>(() => {
     const defaultUser: UserProfile = {
       id: 'guest_sg_01',
       username: 'lu_khach_phuong_nam',
       name: 'Lữ Khách Phương Nam',
       avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
-      lpPoints: 0, // Reset to 0 points as requested
+      lpPoints: 0,
       level: 1,
       exp: 0,
       title: 'Lữ Khách Tập Sự',
@@ -60,29 +66,35 @@ export default function App() {
       isGoogleLinked: false
     };
     try {
-      const saved = localStorage.getItem(STORAGE_KEY);
+      const activeEmail = getActiveSessionEmail();
+      const emailSaved = activeEmail ? localStorage.getItem(`saigon_heritage_user_email_${sanitizeEmailKey(activeEmail)}`) : null;
+      const saved = emailSaved || localStorage.getItem(STORAGE_KEY) || localStorage.getItem('saigon_heritage_explorer_user_v4');
       if (saved) {
         const parsed = JSON.parse(saved);
         return {
           ...defaultUser,
           ...parsed,
+          lpPoints: typeof parsed?.lpPoints === 'number' ? parsed.lpPoints : 0,
           isLoggedIn: typeof parsed?.isLoggedIn === 'boolean' ? parsed.isLoggedIn : false,
           isGoogleLinked: typeof parsed?.isGoogleLinked === 'boolean' ? parsed.isGoogleLinked : false,
-          studyHours: typeof parsed?.studyHours === 'number' ? parsed.studyHours : defaultUser.studyHours,
-          studyMinutes: typeof parsed?.studyMinutes === 'number' ? parsed.studyMinutes : defaultUser.studyMinutes,
-          learningStreakDays: typeof parsed?.learningStreakDays === 'number' ? parsed.learningStreakDays : defaultUser.learningStreakDays,
+          studyHours: typeof parsed?.studyHours === 'number' ? parsed.studyHours : 0,
+          studyMinutes: typeof parsed?.studyMinutes === 'number' ? parsed.studyMinutes : 0,
           badgesUnlocked: Array.isArray(parsed?.badgesUnlocked) ? parsed.badgesUnlocked : defaultUser.badgesUnlocked,
           completedQuests: Array.isArray(parsed?.completedQuests) ? parsed.completedQuests : defaultUser.completedQuests,
-          lpPoints: typeof parsed?.lpPoints === 'number' ? parsed.lpPoints : defaultUser.lpPoints,
         };
       }
     } catch {}
     return defaultUser;
   });
 
-  // Handle explicit progress reset back to 0 points
-  const handleResetProgress = useCallback(() => {
+  // Handle explicit progress reset back to 0 points, resetting habits and preferences as well
+  const handleResetProgress = useCallback(async () => {
     sound.playClick();
+    const userEmail = (user.googleEmail || user.email || '').trim().toLowerCase();
+    
+    // Reset thói quen và sở thích học tập
+    resetLearningHabitsAndPreferences(userEmail || undefined);
+
     const freshUser: UserProfile = {
       id: user.id || 'guest_sg_01',
       username: user.username || 'lu_khach_phuong_nam',
@@ -106,11 +118,22 @@ export default function App() {
     };
     setUser(freshUser);
     try {
+      localStorage.removeItem('saigon_heritage_explorer_user');
       localStorage.removeItem('saigon_heritage_explorer_user_v2');
+      localStorage.removeItem('saigon_heritage_explorer_user_v3');
+      localStorage.removeItem('saigon_heritage_explorer_user_v4');
       localStorage.setItem(STORAGE_KEY, JSON.stringify(freshUser));
+      if (userEmail) {
+        localStorage.setItem(`saigon_heritage_user_email_${sanitizeEmailKey(userEmail)}`, JSON.stringify(freshUser));
+      }
+      await fetch('/api/user/reset-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id, email: userEmail })
+      });
     } catch {}
     sound.playSuccess();
-  }, [user.googleEmail, user.id, user.isGoogleLinked, user.isLoggedIn, user.name, user.username, user.avatar]);
+  }, [user.googleEmail, user.email, user.id, user.isGoogleLinked, user.isLoggedIn, user.name, user.username, user.avatar]);
 
   // Auth requirement & pending navigation state
   const [authTargetReason, setAuthTargetReason] = useState<'quests' | 'leaderboard' | 'general'>('general');
@@ -182,12 +205,17 @@ export default function App() {
 
   // Robust Player Progress & Learning Memory Persistence
   useEffect(() => {
+    const userEmail = (user.googleEmail || user.email || '').trim().toLowerCase();
     try {
       // Primary local storage
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
       // Isolated individual player storage key to preserve multi-user accounts
       if (user.id) {
         localStorage.setItem(`saigon_heritage_user_${user.id}`, JSON.stringify(user));
+      }
+      if (userEmail) {
+        localStorage.setItem(`saigon_heritage_user_email_${sanitizeEmailKey(userEmail)}`, JSON.stringify(user));
+        setActiveSessionEmail(userEmail);
       }
     } catch (e) {
       console.warn('Could not persist user progress to localStorage', e);
@@ -198,7 +226,12 @@ export default function App() {
       fetch('/api/user/save-progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userProfile: user })
+        body: JSON.stringify({ 
+          userProfile: {
+            ...user,
+            email: userEmail || user.id
+          }
+        })
       }).catch(err => console.debug('Server progress sync deferred:', err));
     }, 1200);
 
@@ -221,6 +254,18 @@ export default function App() {
 
   // Handle user login / registration success
   const handleUserLogin = (updated: UserProfile) => {
+    const userEmail = (updated.googleEmail || updated.email || '').trim().toLowerCase();
+    if (userEmail) {
+      setActiveSessionEmail(userEmail);
+      // Check if there is already saved progress for this Gmail in localStorage
+      const savedEmailUser = localStorage.getItem(`saigon_heritage_user_email_${sanitizeEmailKey(userEmail)}`);
+      if (savedEmailUser) {
+        try {
+          const parsed = JSON.parse(savedEmailUser);
+          updated = { ...updated, ...parsed };
+        } catch (e) {}
+      }
+    }
     setUser(updated);
     if (pendingTabAfterAuth) {
       setActiveTab(pendingTabAfterAuth);
@@ -513,22 +558,24 @@ export default function App() {
         onClose={() => setIsAuthModalOpen(false)}
         onLogin={handleUserLogin}
         onLogout={() => {
+          setActiveSessionEmail(null);
+          localStorage.removeItem('saigon_heritage_active_email');
           localStorage.removeItem(STORAGE_KEY);
           setUser({
             id: 'guest_sg_01',
             username: 'lu_khach_phuong_nam',
             name: 'Lữ Khách Phương Nam',
             avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
-            lpPoints: 350,
+            lpPoints: 0,
             level: 1,
-            exp: 80,
+            exp: 0,
             title: 'Lữ Khách Tập Sự',
-            studyHours: 3,
-            studyMinutes: 20,
-            learningStreakDays: 2,
-            studySessionsCount: 4,
-            badgesUnlocked: ['badge_ben_thanh'],
-            completedQuests: ['quest_ben_thanh_01'],
+            studyHours: 0,
+            studyMinutes: 0,
+            learningStreakDays: 1,
+            studySessionsCount: 1,
+            badgesUnlocked: [],
+            completedQuests: [],
             redeemedRewardCodes: [],
             joinedDate: '2026',
             isLoggedIn: false,

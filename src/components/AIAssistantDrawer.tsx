@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { ChatMessage, Location3D } from '../types';
 import { sound } from '../utils/audio';
+import { generateIntelligentCulturalAnswer } from '../utils/heritageKnowledgeEngine';
 
 interface AIAssistantDrawerProps {
   isOpen: boolean;
@@ -110,18 +111,31 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
     setIsLoading(true);
 
     try {
+      // Abort controller with 5 second timeout so user never waits if server is unavailable
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 5000);
+
       const response = await fetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({
           message: query,
           locationContext: currentLocation ? `${currentLocation.name} (${currentLocation.province})` : 'TP. Hồ Chí Minh & Nam Bộ',
           history: messages.slice(-6)
         })
       });
+      clearTimeout(timeoutId);
+
+      if (!response.ok) {
+        throw new Error(`Server returned status ${response.status}`);
+      }
 
       const data = await response.json();
-      const aiReplyText = data.reply || 'Ba Son đã ghi nhận. Hãy tiếp tục quan sát các chi tiết kiến trúc độc đáo nhé!';
+      const aiReplyText = data?.reply;
+      if (!aiReplyText) {
+        throw new Error('Empty reply');
+      }
 
       const aiMsg: ChatMessage = {
         id: `ai_${Date.now()}`,
@@ -136,14 +150,23 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       setMessages(prev => [...prev, aiMsg]);
       sound.playDanTranhNote(587.33, 0.8);
     } catch (err) {
+      // Direct high-accuracy offline/exported engine: guarantees immediate, deeply factual answers on GitHub exports
+      const localResult = generateIntelligentCulturalAnswer({
+        message: query,
+        locationContext: currentLocation ? `${currentLocation.name} (${currentLocation.province})` : 'TP. Hồ Chí Minh & Nam Bộ'
+      });
+
       const fallbackMsg: ChatMessage = {
         id: `ai_${Date.now()}`,
         sender: 'ai',
         senderName: 'Cố Vấn Ba Son',
-        text: 'Vùng đất Gia Định - Sài Gòn - Phương Nam chất chứa hơn 300 năm bề dày lịch sử. Bạn hãy quan sát kỹ hoa văn, vật liệu và bối cảnh lịch sử của địa danh để tìm ra đáp án chính xác nhé!',
-        timestamp: 'Vừa xong'
+        text: localResult.reply,
+        timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+        sources: localResult.sources || [],
+        groundingQueries: localResult.searchQueries || []
       };
       setMessages(prev => [...prev, fallbackMsg]);
+      sound.playDanTranhNote(587.33, 0.8);
     } finally {
       setIsLoading(false);
     }

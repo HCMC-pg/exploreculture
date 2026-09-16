@@ -50,6 +50,9 @@ import {
   getLearningHabits,
   saveLearningHabits,
   syncProgressToBackend,
+  resetLearningHabitsAndPreferences,
+  getDefaultPreferences,
+  getDefaultLearningHabits,
   QuestStepAttempt 
 } from '../utils/learningStorage';
 
@@ -72,18 +75,28 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   currentThemeId = 'classic_amber',
   onResetProgress
 }) => {
-  const [activeTab, setActiveTab] = useState<'habits' | 'learning' | 'review' | 'gear' | 'theme' | 'passport'>('habits');
+  const userEmail = (user.googleEmail || user.email || '').trim().toLowerCase();
+  const [activeTab, setActiveTab] = useState<'habits' | 'learning' | 'review' | 'theme' | 'passport'>('habits');
   const [isEditing, setIsEditing] = useState(false);
   const [nameInput, setNameInput] = useState(user.name);
-  const [preferences, setPreferences] = useState<UserPreferences>(() => getUserPreferences());
-  const [habits, setHabits] = useState(() => getLearningHabits());
+  const [preferences, setPreferences] = useState<UserPreferences>(() => getUserPreferences(userEmail || undefined));
+  const [habits, setHabits] = useState(() => getLearningHabits(userEmail || undefined));
   const [isSavingPrefs, setIsSavingPrefs] = useState(false);
   const [saveSuccessNotice, setSaveSuccessNotice] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
 
-  const memory = getLearningMemory();
+  const memory = getLearningMemory(userEmail || undefined);
   const reviewQuestions = getReviewQuestions();
   const buffs = getActiveTravelerBuffs();
+
+  const handleResetHabitsAndPreferences = () => {
+    const clean = resetLearningHabitsAndPreferences(userEmail || undefined);
+    setPreferences(clean.preferences);
+    setHabits(clean.habits);
+    sound.playSuccess();
+    setSaveSuccessNotice(true);
+    setTimeout(() => setSaveSuccessNotice(false), 2500);
+  };
 
   const handleSaveName = () => {
     if (nameInput.trim()) {
@@ -96,7 +109,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
   const handleUpdatePreferenceField = <K extends keyof UserPreferences>(key: K, value: UserPreferences[K]) => {
     const updated = { ...preferences, [key]: value };
     setPreferences(updated);
-    saveUserPreferences(updated);
+    saveUserPreferences(updated, userEmail || undefined);
     sound.playClick();
   };
 
@@ -104,7 +117,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const list = [...preferences.favoriteCategories];
     const idx = list.indexOf(cat);
     if (idx >= 0) {
-      if (list.length > 1) list.splice(idx, 1);
+      list.splice(idx, 1);
     } else {
       list.push(cat);
     }
@@ -115,7 +128,7 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
     const list = [...preferences.preferredEras];
     const idx = list.indexOf(era);
     if (idx >= 0) {
-      if (list.length > 1) list.splice(idx, 1);
+      list.splice(idx, 1);
     } else {
       list.push(era);
     }
@@ -124,7 +137,8 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
 
   const handleSaveAllPreferences = async () => {
     setIsSavingPrefs(true);
-    saveUserPreferences(preferences);
+    saveUserPreferences(preferences, userEmail || undefined);
+    saveLearningHabits(habits, userEmail || undefined);
     const updatedProfile: UserProfile = {
       ...user,
       preferences,
@@ -191,6 +205,16 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
           <h2 className="font-['Be_Vietnam_Pro',sans-serif] font-black text-lg sm:text-xl text-amber-200">
             Hộ Chiếu & Bộ Nhớ Tri Thức Phương Nam
           </h2>
+          <div className="pt-1 flex items-center justify-center">
+            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-stone-900 border border-stone-800 text-[11px] text-stone-300">
+              <Cloud className="w-3.5 h-3.5 text-cyan-400" />
+              {userEmail ? (
+                <span>Lưu trữ theo Gmail: <strong className="text-amber-300">{userEmail}</strong></span>
+              ) : (
+                <span>Chế độ Khách (Đăng nhập Gmail để lưu tiến trình cá nhân)</span>
+              )}
+            </span>
+          </div>
         </div>
 
         {/* Top Navigation Tabs */}
@@ -199,7 +223,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             { id: 'habits', label: '🎯 Thói Quen & Sở Thích', icon: Target },
             { id: 'learning', label: '📊 Tiến Trình Học Tập', icon: BookOpen },
             { id: 'review', label: `📝 Sổ Tay Ôn Tập (${reviewQuestions.length})`, icon: RotateCcw },
-            { id: 'gear', label: `🎒 Trang Bị (${buffs.equippedCount})`, icon: Package },
             { id: 'passport', label: '🪪 Hộ Chiếu', icon: Award }
           ].map(tab => {
             const Icon = tab.icon;
@@ -391,29 +414,40 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
               </div>
 
               {/* Save & Cloud Sync Action */}
-              <div className="pt-3 border-t border-stone-800 flex items-center justify-between">
+              <div className="pt-3 border-t border-stone-800 flex flex-wrap items-center justify-between gap-2">
                 <span className="text-xs text-stone-400 flex items-center gap-1.5">
                   <Cloud className="w-4 h-4 text-cyan-400" />
                   <span>Tự động đồng bộ tiến trình học vào đám mây</span>
                 </span>
 
-                <button
-                  onClick={handleSaveAllPreferences}
-                  disabled={isSavingPrefs}
-                  className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
-                >
-                  {saveSuccessNotice ? (
-                    <>
-                      <Check className="w-4 h-4 text-emerald-950" />
-                      <span>Đã Lưu & Đồng Bộ!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Sparkles className="w-4 h-4" />
-                      <span>{isSavingPrefs ? 'Đang Lưu...' : 'Lưu Thói Quen & Sở Thích'}</span>
-                    </>
-                  )}
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResetHabitsAndPreferences}
+                    className="px-3 py-2 rounded-xl border border-stone-800 bg-stone-900 text-stone-300 hover:text-rose-300 hover:border-rose-900/60 font-bold text-xs flex items-center gap-1.5 transition-all"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-rose-400" />
+                    <span>Đặt Lại Thói Quen Về Mặc Định</span>
+                  </button>
+
+                  <button
+                    onClick={handleSaveAllPreferences}
+                    disabled={isSavingPrefs}
+                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-yellow-400 hover:from-amber-400 hover:to-yellow-300 text-stone-950 font-bold text-xs flex items-center gap-1.5 shadow-md shadow-amber-500/20 transition-all"
+                  >
+                    {saveSuccessNotice ? (
+                      <>
+                        <Check className="w-4 h-4 text-emerald-950" />
+                        <span>Đã Lưu & Đồng Bộ!</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="w-4 h-4" />
+                        <span>{isSavingPrefs ? 'Đang Lưu...' : 'Lưu Thói Quen & Sở Thích'}</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
 
             </div>
@@ -564,41 +598,6 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
             </div>
           )}
 
-          {/* TAB 3: EQUIPPED GEAR */}
-          {activeTab === 'gear' && (
-            <div className="space-y-4 animate-fadeIn">
-              <div className="p-3 rounded-xl bg-stone-950 border border-amber-500/30 text-xs text-stone-300 flex items-center justify-between">
-                <span>Trang bị du hành & cổ phục:</span>
-                <span className="text-[11px] text-amber-400 font-semibold">Tự động kích hoạt hiệu ứng</span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {(Object.values(memory.equippedGear) as any[]).map((gear: any) => (
-                  <div
-                    key={gear.id}
-                    className={`p-3.5 rounded-2xl border ${
-                      gear.isEquipped ? 'bg-amber-950/20 border-amber-500/50' : 'bg-stone-950 border-stone-800 opacity-60'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-bold text-xs text-amber-200">{gear.name}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${
-                        gear.isEquipped ? 'bg-emerald-500 text-stone-950' : 'bg-stone-800 text-stone-400'
-                      }`}>
-                        {gear.isEquipped ? 'Đang Mặc' : 'Trong Túi'}
-                      </span>
-                    </div>
-                    <p className="text-[11px] text-amber-400 font-bold flex items-center gap-1">
-                      <Zap className="w-3 h-3" />
-                      {gear.buffName}
-                    </p>
-                    <p className="text-[11px] text-stone-300 mt-1">{gear.buffDescription}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
           {/* TAB 4: PASSPORT & BADGES */}
           {activeTab === 'passport' && (
             <div className="space-y-4 animate-fadeIn">
@@ -670,22 +669,23 @@ export const UserProfileModal: React.FC<UserProfileModalProps> = ({
                     className="w-full py-2.5 px-4 rounded-xl border border-rose-900/50 bg-rose-950/20 text-rose-400 hover:bg-rose-950/40 hover:border-rose-500/50 text-xs font-bold transition-all flex items-center justify-center gap-2"
                   >
                     <span>🔄</span>
-                    <span>Đặt Lại Điểm Số & Tiến Trình (Reset về 0 LP)</span>
+                    <span>Đặt Lại Thói Quen, Sở Thích & Toàn Bộ Tiến Trình (0 LP)</span>
                   </button>
                 ) : (
                   <div className="p-3.5 rounded-xl bg-rose-950/40 border border-rose-500/40 space-y-3">
                     <p className="text-xs text-rose-200 text-center font-medium">
-                      Bạn có chắc chắn muốn đặt lại điểm số LP, huy hiệu và các nhiệm vụ đã hoàn thành về 0 để trải nghiệm lại từ đầu?
+                      Bạn có chắc chắn muốn đặt lại điểm số LP, huy hiệu, nhiệm vụ, thói quen & sở thích học tập về trạng thái mặc định ban đầu?
                     </p>
                     <div className="flex items-center justify-center gap-3">
                       <button
                         onClick={() => {
+                          handleResetHabitsAndPreferences();
                           if (onResetProgress) onResetProgress();
                           setShowResetConfirm(false);
                         }}
                         className="px-4 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-bold text-xs shadow"
                       >
-                        Xác Nhận Đặt Lại Về 0
+                        Xác Nhận Đặt Lại Tất Cả Về 0
                       </button>
                       <button
                         onClick={() => setShowResetConfirm(false)}
