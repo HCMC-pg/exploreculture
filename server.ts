@@ -48,9 +48,9 @@ async function generateContentWithRetryAndFallback(
 ): Promise<string | null> {
   for (const model of CANDIDATE_MODELS) {
     try {
-      // 12-second resilient timeout per candidate attempt
+      // 3.5-second fast timeout per candidate attempt to ensure rapid responsiveness
       const timeoutPromise = new Promise<never>((_, reject) =>
-        setTimeout(() => reject(new Error(`Timeout on ${model}`)), 12000)
+        setTimeout(() => reject(new Error(`Timeout on ${model}`)), 3500)
       );
 
       const responsePromise = ai.models.generateContent({
@@ -850,6 +850,77 @@ function matchHeritageEntity(message: string, locationContext?: string): string 
   return null;
 }
 
+function getDirectFactualAnswer(normMsg: string, entityKey: string): string | null {
+  const isAskingArchitect = normMsg.includes('ai thiet ke') || normMsg.includes('kien truc su') || normMsg.includes('ky su') || normMsg.includes('ai xay') || normMsg.includes('nguoi thiet ke');
+  const isAskingYear = normMsg.includes('nam nao') || normMsg.includes('xay nam nao') || normMsg.includes('khoi cong') || normMsg.includes('khanh thanh') || normMsg.includes('thoi gian');
+  const isAskingDimension = normMsg.includes('dai bao nhieu') || normMsg.includes('cao bao nhieu') || normMsg.includes('kich thuoc') || normMsg.includes('so luong') || normMsg.includes('ky luc');
+
+  if (entityKey === 'buu_dien_tphcm') {
+    if (isAskingArchitect) {
+      return '⭐ **Kiến trúc sư thiết kế**: Bưu điện Trung tâm TP.HCM do **Kiến trúc sư Marie-Alfred Foulhoux** (nguyên KTS trưởng các công trình công cộng Nam Kỳ) thiết kế theo phong cách Gothic kết hợp Phục Hưng. Hệ khung sắt vòm chịu lực bên trong do xưởng đúc danh tiếng của **Gustave Eiffel** gia công.';
+    }
+    if (isAskingYear) {
+      return '⭐ **Thời gian xây dựng**: Bưu điện Trung tâm Sài Gòn được khởi công năm **1886** và chính thức khánh thành vào năm **1891**. Hai bức bản đồ lịch sử vẽ tay trên tường bên trong được hoàn thành vào năm **1892**.';
+    }
+  }
+
+  if (entityKey === 'dinh_doc_lap') {
+    if (isAskingArchitect) {
+      return '⭐ **Kiến trúc sư thiết kế**: Dinh Độc Lập do **Kiến trúc sư Ngô Viết Thụ** (người Việt Nam đầu tiên đoạt giải Khôi nguyên La Mã - Grand Prix de Rome năm 1955) thiết kế. Mặt bằng Dinh được bố cục theo triết lý phong thủy phương Đông mô phỏng các chữ Hán: **CÁT (吉), KHẨU (口), TRUNG (中), TAM (三), và CHỦ (主)**.';
+    }
+    if (isAskingYear) {
+      return '⭐ **Thời gian xây dựng & Mốc son**: Dinh Độc Lập khởi công ngày **1/7/1962** và khánh thành ngày **31/10/1966** trên nền Dinh Norodom cũ (1868). Mốc son lịch sử hào hùng diễn ra lúc **11 giờ 30 phút ngày 30/4/1975** khi hai chiếc xe tăng **390 và 843** húc đổ cổng chính Dinh Độc Lập.';
+    }
+  }
+
+  if (entityKey === 'nha_tho_duc_ba') {
+    if (isAskingArchitect) {
+      return '⭐ **Kiến trúc sư thiết kế**: Nhà thờ Đức Bà Sài Gòn do **Kiến trúc sư Jules Bourard** thiết kế theo phong cách Neo-Romanesque kết hợp Gothic. Toàn bộ gạch đỏ xây tường được nung tại xưởng Guichard Carvin & Cie từ cảng **Marseille (Pháp)** chuyển sang bằng đường biển, không hề tô trát vữa mà đến nay vẫn không bám rêu mốc.';
+    }
+    if (isAskingYear) {
+      return '⭐ **Thời gian xây dựng**: Đặt viên đá đầu tiên ngày **7/10/1877**, khánh thành ngày **11/4/1880**. Đến năm **1895**, hai tháp nhọn cao 60.5m được gắn thêm để chứa bộ 6 quả chuông đồng lớn đúc tại Pháp. Bức tượng Đức Mẹ Hòa Bình bằng cẩm thạch trắng Carrara được khánh thành năm **1959**.';
+    }
+  }
+
+  if (entityKey === 'ben_nha_rong') {
+    if (isAskingYear || normMsg.includes('5/6/1911') || normMsg.includes('nguyen tat thanh') || normMsg.includes('bac ho')) {
+      return '⭐ **Mốc lịch sử thiêng liêng**: Bến Nhà Rồng khởi dựng năm **1862-1863** làm trụ sở hãng tàu Messageries Maritimes. Đặc biệt, vào ngày **5 tháng 6 năm 1911**, người thanh niên yêu nước **Nguyễn Tất Thành (Văn Ba)** đã bước lên con tàu buôn Amiral Latouche-Tréville rời Bến Nhà Rồng ra đi tìm đường cứu nước.';
+    }
+  }
+
+  if (entityKey === 'dia_dao_cu_chi') {
+    if (isAskingDimension || normMsg.includes('dai') || normMsg.includes('sau')) {
+      return '⭐ **Quy mô & Chiều dài Địa đạo**: Hệ thống Địa đạo Củ Chi có tổng chiều dài lên tới **hơn 250 km** đường hầm trong lòng đất, chia làm **3 tầng sâu liên hoàn** (Tầng 1 sâu 3m chống đạn pháo; Tầng 2 sâu 6m chống bom xăng; Tầng 3 sâu 8-12m chịu được bom phá hạng nặng). Bếp Hoàng Cầm giấu khói do đồng chí Hoàng Cầm sáng chế năm **1951**.';
+    }
+  }
+
+  if (entityKey === 'chua_hoi_khanh') {
+    if (isAskingDimension || normMsg.includes('phat nam') || normMsg.includes('ky luc')) {
+      return '⭐ **Kỷ lục Tượng Phật nhập Niết bàn**: Chùa Hội Khánh (Thủ Dầu Một, Bình Dương) sở hữu pho tượng Đức Phật Thích Ca nhập Niết bàn an vị trên mái chùa dài **52 mét**, cao **12 mét**, được Tổ chức Kỷ lục Châu Á xác lập kỷ lục **Tượng Phật nằm trên mái chùa dài nhất châu Á vào năm 2013**. Chùa do thiền sư Đại Ngạn khai sơn năm 1741.';
+    }
+  }
+
+  if (entityKey === 'bach_dinh_vung_tau') {
+    if (normMsg.includes('giam long') || normMsg.includes('vua') || normMsg.includes('ai o')) {
+      return '⭐ **Di tích Vua Thành Thái**: Bạch Dinh (Villa Blanche, Vũng Tàu) do Toàn quyền Pháp Paul Doumer xây dựng (1898-1902). Nơi đây từng là nơi thực dân Pháp **giam lỏng Vua Thành Thái từ năm 1907 đến năm 1916** trước khi đày ngài sang đảo Réunion. Bạch Dinh hiện trưng bày bộ sưu tập gốm sứ Khang Hy thế kỷ 17 trục vớt từ tàu cổ đắm Hòn Cau.';
+    }
+  }
+
+  if (entityKey === 'hai_dang_vung_tau') {
+    if (isAskingYear || isAskingDimension) {
+      return '⭐ **Niên đại & Kiến trúc Hải Đăng**: Hải đăng Vũng Tàu trên đỉnh núi Tao Phùng xây lần đầu năm **1862**, sau đó xây dựng lại năm **1913** thành tháp tròn bằng đá hoa cương trắng cao **18 mét**, đường kính 3 mét, có cầu thang xoắn ốc 55 bậc. Tầm quét luồng sáng xa tới **30 hải lý** (khoảng 55 km).';
+    }
+  }
+
+  if (entityKey === 'cho_ben_thanh') {
+    if (isAskingYear || normMsg.includes('phu dieu')) {
+      return '⭐ **Niên đại & Điểm nhấn Chợ Bến Thành**: Chợ Bến Thành mới khởi công năm **1912** và khánh thành vào tháng **3/1914** do hãng thầu Brossard et Maupin thi công. Năm **1952**, bộ **12 bức phù điêu gốm mỹ thuật Biên Hòa** mô tả sản vật phương Nam đã được gắn trang trọng ở 4 cửa chính Đông - Tây - Nam - Bắc.';
+    }
+  }
+
+  return null;
+}
+
 app.post('/api/gemini/chat', async (req, res) => {
   try {
     const { message, locationContext, currentQuest, history } = req.body;
@@ -857,6 +928,8 @@ app.post('/api/gemini/chat', async (req, res) => {
 
     // Comprehensive authentic entity resolution
     const matchedKey = matchHeritageEntity(message, locationContext);
+    const normMsg = stripVietnameseAccents(message || '');
+    const directAnswer = matchedKey ? getDirectFactualAnswer(normMsg, matchedKey) : null;
 
     const systemInstruction = `
 Bạn là "CỐ VẤN DI SẢN BA SON" — Bách khoa toàn thư sống và Nhà khảo cứu di sản Nam Bộ (TP. Hồ Chí Minh, Bình Dương, Bà Rịa - Vũng Tàu, Côn Đảo).
@@ -1056,7 +1129,7 @@ function calculateLearningAnalytics(userProfile: any) {
   };
 }
 
-// User Profile & Learning Progress Save Endpoint: OPEN & SEAMLESS (No Google/Gmail barrier)
+// User Profile & Learning Progress Save Endpoint: STRICT REQUIREMENT - User MUST be logged into personal Gmail
 app.post('/api/user/save-progress', (req, res) => {
   try {
     const { userProfile } = req.body;
@@ -1064,16 +1137,34 @@ app.post('/api/user/save-progress', (req, res) => {
       return res.status(400).json({ success: false, error: 'Thiếu dữ liệu hồ sơ người dùng.' });
     }
 
-    const userId = userProfile.id || `user_${Date.now()}`;
-    const existingData = userProgressStore[userId] || {};
+    const userEmail = (userProfile.googleEmail || userProfile.email || '').trim().toLowerCase();
+    const isGmail = userEmail.endsWith('@gmail.com');
+    const isGoogleLinked = !!userProfile.isGoogleLinked || userProfile.authProvider === 'google';
+
+    if (!isGmail || !isGoogleLinked) {
+      return res.status(401).json({
+        success: false,
+        requireGmailLogin: true,
+        error: 'Yêu cầu người dùng phải đăng nhập vào Gmail của chính bản thân người dùng (@gmail.com) để lưu tiến trình học tập.'
+      });
+    }
+
+    const userId = userProfile.id || `user_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
+    const existingData = userProgressStore[userEmail] || userProgressStore[userId] || {};
     const updated = {
       ...existingData,
       ...userProfile,
       id: userId,
+      email: userEmail,
+      googleEmail: userEmail,
+      isLoggedIn: true,
+      isGoogleLinked: true,
+      authProvider: 'google',
       lastSyncedAt: new Date().toISOString()
     };
 
     userProgressStore[userId] = updated;
+    userProgressStore[userEmail] = updated;
     const analytics = calculateLearningAnalytics(updated);
 
     res.json({ 
@@ -1081,7 +1172,7 @@ app.post('/api/user/save-progress', (req, res) => {
       user: updated,
       learningProgress: analytics,
       lastSyncedAt: updated.lastSyncedAt,
-      message: 'Tiến trình khám phá di sản đã được bảo lưu an toàn!' 
+      message: 'Tiến trình khám phá di sản đã được bảo lưu an toàn vào tài khoản Gmail chính chủ!' 
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
@@ -1297,23 +1388,31 @@ app.post('/api/chat/messages', (req, res) => {
 // Authentication & Cloud Sync Endpoints
 app.post('/api/auth/google', (req, res) => {
   const { email, name, picture, googleId, clientProfile } = req.body;
-  const userEmail = (email || 'user@gmail.com').toLowerCase();
+  const userEmail = (email || '').trim().toLowerCase();
   
+  // Strict check: Require real Gmail address ending in @gmail.com
+  if (!userEmail || !userEmail.endsWith('@gmail.com')) {
+    return res.status(400).json({
+      success: false,
+      error: 'Vui lòng sử dụng địa chỉ Gmail cá nhân chính chủ của bạn (kết thúc bằng @gmail.com) để đăng nhập và bảo lưu tiến trình học tập.'
+    });
+  }
+
   // Find existing profile in memory or storage by email
   const existingByEmail = Object.values(userProgressStore).find(
     (u: any) => u.email && u.email.toLowerCase() === userEmail
   ) as any;
 
-  const existingData = existingByEmail || (googleId ? userProgressStore[googleId] : null) || {};
+  const existingData = existingByEmail || (googleId ? userProgressStore[googleId] : null) || userProgressStore[userEmail] || {};
   
   const mergedUser = {
     ...existingData,
     ...(clientProfile || {}),
-    id: existingData.id || googleId || `google_${Date.now()}`,
-    username: (userEmail || 'google_user').split('@')[0],
-    name: name || existingData.name || 'Lữ Khách Google',
+    id: existingData.id || googleId || `google_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}`,
+    username: userEmail.split('@')[0],
+    name: name || existingData.name || userEmail.split('@')[0],
     email: userEmail,
-    avatar: picture || existingData.avatar || 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80',
+    avatar: picture || existingData.avatar || `https://api.dicebear.com/7.x/identicon/svg?seed=${userEmail}`,
     isLoggedIn: true,
     isGoogleLinked: true,
     googleEmail: userEmail,
@@ -1345,7 +1444,7 @@ app.post('/api/auth/google', (req, res) => {
     success: true, 
     user: mergedUser, 
     analytics,
-    message: 'Đăng nhập và đồng bộ dữ liệu Google thành công' 
+    message: 'Đăng nhập Gmail chính chủ và đồng bộ tiến trình thành công' 
   });
 });
 

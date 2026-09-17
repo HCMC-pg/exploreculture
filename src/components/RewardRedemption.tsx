@@ -67,6 +67,7 @@ interface ChestType {
   borderColor: string;
   description: string;
   possiblePrizes: string[];
+  image: string;
 }
 
 const CHEST_TYPES: ChestType[] = [
@@ -75,32 +76,70 @@ const CHEST_TYPES: ChestType[] = [
     name: 'Rương Đồng Cổ Điển',
     costLP: 50,
     tier: 'bronze',
-    color: 'from-amber-800 to-amber-950',
+    color: 'from-amber-900/90 to-stone-950',
     borderColor: 'border-amber-700/60',
     description: 'Rương cổ sơ cấp chứa voucher giảm giá 20-30%, điểm LP may mắn hoặc huy hiệu lưu niệm.',
-    possiblePrizes: ['+80 Linh Điểm LP', 'Voucher Cà Phê Vợt Ba Lù 20k', 'Huy Hiệu Cổ Vật Đồng', '+50 EXP']
+    possiblePrizes: ['+80 Linh Điểm LP', 'Voucher Cà Phê Vợt Ba Lù 20k', 'Huy Hiệu Cổ Vật Đồng', '+50 EXP'],
+    image: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'chest_silver',
     name: 'Rương Bạc Nam Kỳ',
     costLP: 120,
     tier: 'silver',
-    color: 'from-slate-600 to-slate-900',
+    color: 'from-slate-700/90 to-stone-950',
     borderColor: 'border-slate-400/60',
     description: 'Rương bạc chứa vé bảo tàng miễn phí, voucher ẩm thực Chợ Bến Thành và trang bị du hành quý.',
-    possiblePrizes: ['+250 Linh Điểm LP', 'Vé Miễn Phí Bảo Tàng TP.HCM', 'Kính Lúp Soi Cổ Vật', 'Voucher Cơm Tấm 50k']
+    possiblePrizes: ['+250 Linh Điểm LP', 'Vé Miễn Phí Bảo Tàng TP.HCM', 'Kính Lúp Soi Cổ Vật', 'Voucher Cơm Tấm 50k'],
+    image: 'https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=600&q=80'
   },
   {
     id: 'chest_gold',
     name: 'Rương Vàng Hoàng Gia Gia Định',
     costLP: 250,
     tier: 'gold',
-    color: 'from-yellow-500 via-amber-600 to-amber-950',
+    color: 'from-amber-600/90 via-amber-900/60 to-stone-950',
     borderColor: 'border-yellow-400',
     description: 'Báu vật hoàng gia chứa quà gốm sứ thủ công Đại Hưng cao cấp, vé du thuyền sông Sài Gòn và buff siêu cấp.',
-    possiblePrizes: ['+600 Linh Điểm LP', 'Vé Du Thuyền Sông Sài Gòn 5 Sao', 'Bình Men Lam Cổ Truyền', 'Bộ Sưu Tập La Bàn Đồng']
+    possiblePrizes: ['+600 Linh Điểm LP', 'Vé Du Thuyền Sông Sài Gòn 5 Sao', 'Bình Men Lam Cổ Truyền', 'Bộ Sưu Tập La Bàn Đồng'],
+    image: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=600&q=80'
   }
 ];
+
+// Reliable fallback heritage image
+const HERITAGE_FALLBACK_IMG = 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80';
+
+const handleImageError = (e: React.SyntheticEvent<HTMLImageElement, Event>) => {
+  const target = e.currentTarget;
+  if (target.src !== HERITAGE_FALLBACK_IMG) {
+    target.src = HERITAGE_FALLBACK_IMG;
+  }
+};
+
+// Illustrative photo mapping for traveler inventory gear
+const GEAR_ILLUSTRATION_MAP: Record<string, string> = {
+  rew_gear_compass: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=400&q=80',
+  rew_gear_scarf: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=400&q=80',
+  rew_gear_bucket_hat: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?auto=format&fit=crop&w=400&q=80',
+  rew_gear_flashlight: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=400&q=80',
+  rew_gear_magnifier: 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=400&q=80',
+  rew_gear_ba_ba: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=400&q=80',
+  rew_gear_tumbler: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=400&q=80',
+  rew_gear_leather_journal: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
+  rew_gear_pin_set: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+  rew_master_ky_lan_seal: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+};
+
+const CATEGORY_DEFAULT_GEAR_IMAGE: Record<string, string> = {
+  headwear: 'https://images.unsplash.com/photo-1575428652377-a2d80e2277fc?auto=format&fit=crop&w=400&q=80',
+  tool: 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=400&q=80',
+  accessory: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=400&q=80',
+  attire: 'https://images.unsplash.com/photo-1583391733956-3750e0ff4e8b?auto=format&fit=crop&w=400&q=80',
+  water: 'https://images.unsplash.com/photo-1602143407151-7111542de6e8?auto=format&fit=crop&w=400&q=80',
+  journal: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
+  relic: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=400&q=80',
+  bag: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=400&q=80',
+};
 
 export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
   user,
@@ -130,107 +169,152 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
     }).catch(() => {});
   };
 
-  // 🎴 Scratch Card Daily State & 1/1000 Probability Configuration
-  interface DailyScratchData {
-    date: string;
+  // 🎴 Scratch Card 1-Hour Cooldown & Encouraging Lore Configuration
+  interface ScratchData {
+    lastScratchedAt: number; // timestamp in ms
     hasScratched: boolean;
-    isJackpot: boolean;
     prizeName: string;
     prizeValue: string;
-    prizeType: 'legendary_gear' | 'miss';
     prizeQuote: string;
     icon: string;
   }
 
-  const getTodayDateStr = () => {
-    const d = new Date();
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-  };
+  const SCRATCH_COOLDOWN_MS = 60 * 60 * 1000; // 1 hour
 
-  const PROVERBS = [
-    'Đường dài mới biết ngựa hay, lữ khách kiên trì ắt tìm thấy ngọc báu phương Nam.',
-    'Sông Sài Gòn nước chảy xuôi dòng, ngày mai may mắn sẽ đong đầy tay lữ khách.',
-    'Chớ thấy sóng cả mà ngã tay chèo, kho tàng di sản vẫn đang đợi bạn giải mã.',
-    'Gia Định xưa ngàn năm văn hiến, vận may luôn mỉm cười với người bền lòng.',
-    'Nước ngọt Bến Nghé nuôi lòng người nhân hậu, hẹn gặp bạn ở chuyến du hành ngày mai.'
+  const SCRATCH_OUTCOMES = [
+    {
+      name: 'Chúc Bạn May Mắn Lần Sau',
+      value: 'CHƯA TRÚNG THƯỞNG',
+      quote: 'Đường dài mới biết ngựa hay, lữ khách kiên trì ắt gặt hái ngọc báu phương Nam.',
+      icon: '🍀'
+    },
+    {
+      name: 'Hữu Duyên Tương Phùng',
+      value: 'HẸN 1 TIẾNG NỮA',
+      quote: 'Sông Sài Gòn nước chảy xuôi dòng, kiên nhẫn tích lũy vận may sẽ tới.',
+      icon: '🏮'
+    },
+    {
+      name: 'Suýt Nữa Là Trúng Rồi!',
+      value: 'TIẾP TỤC CỐ GẮNG',
+      quote: 'Chớ thấy sóng cả mà ngã tay chèo, kho tàng di sản vẫn đang đợi bạn giải mã.',
+      icon: '✨'
+    },
+    {
+      name: 'Chưa Đạt Cơ Duyên',
+      value: 'CHÚC BẠN MAY MẮN',
+      quote: 'Gia Định xưa ngàn năm văn hiến, vận may luôn mỉm cười với người bền lòng.',
+      icon: '📜'
+    },
+    {
+      name: 'Gần Khai Mở Báu Vật',
+      value: 'HẸN LƯỢT CÀO KẾ TIẾP',
+      quote: 'Nước ngọt Bến Nghé nuôi lòng nhân hậu, 1 tiếng nữa hãy quay lại thử vận may tiếp nhé!',
+      icon: '🎋'
+    },
+    {
+      name: 'Vận Khí Đang Tích Lũy',
+      value: 'THỬ LẠI SAU 1 TIẾNG',
+      quote: 'Cổ nhân có câu: Vạn sự khởi đầu nan, kiên trì ắt gặt quả ngọt.',
+      icon: '🕊️'
+    }
   ];
 
-  const [dailyScratch, setDailyScratch] = useState<DailyScratchData>(() => {
-    const today = getTodayDateStr();
+  const getRandomScratchOutcome = () => {
+    return SCRATCH_OUTCOMES[Math.floor(Math.random() * SCRATCH_OUTCOMES.length)];
+  };
+
+  const [scratchData, setScratchData] = useState<ScratchData>(() => {
     try {
-      const saved = localStorage.getItem('saigon_heritage_daily_scratch_v2');
+      const saved = localStorage.getItem('saigon_heritage_scratch_cooldown_v3');
       if (saved) {
-        const parsed: DailyScratchData = JSON.parse(saved);
-        if (parsed.date === today) {
-          return parsed;
+        const parsed: ScratchData = JSON.parse(saved);
+        const now = Date.now();
+        // If 1 hour has elapsed since last scratch, reset for a new ticket
+        if (!parsed.lastScratchedAt || now - parsed.lastScratchedAt >= SCRATCH_COOLDOWN_MS) {
+          const fresh = getRandomScratchOutcome();
+          return {
+            lastScratchedAt: 0,
+            hasScratched: false,
+            prizeName: fresh.name,
+            prizeValue: fresh.value,
+            prizeQuote: fresh.quote,
+            icon: fresh.icon
+          };
         }
+        return parsed;
       }
     } catch (e) {
-      console.warn('Could not read daily scratch state', e);
+      console.warn('Could not read scratch card state', e);
     }
 
-    // New scratch ticket for today with exact 1/1000 (0.001) chance of rare legendary equipment
-    const isJackpot = Math.random() < 0.001; // Exactly 1 in 1000 chance
-    const quote = PROVERBS[Math.floor(Math.random() * PROVERBS.length)];
-
-    const newTicket: DailyScratchData = isJackpot ? {
-      date: today,
+    const initial = getRandomScratchOutcome();
+    return {
+      lastScratchedAt: 0,
       hasScratched: false,
-      isJackpot: true,
-      prizeName: 'Trang Bị Cổ Truyền Thần Thoại: Áo Dài Hoàng Triều Gia Định Thêu Rồng Vàng',
-      prizeValue: 'BẢO VẬT 1/1000 (+5000 LP)',
-      prizeType: 'legendary_gear',
-      prizeQuote: 'Vận may ngút trời! Lữ khách đã mở ra báu vật thần thoại với tỷ lệ cực hiếm 1/1000!',
-      icon: '👑'
-    } : {
-      date: today,
-      hasScratched: false,
-      isJackpot: false,
-      prizeName: 'Chúc Bạn May Mắn Lần Sau',
-      prizeValue: 'HẸN GẶP NGÀY MAI',
-      prizeType: 'miss',
-      prizeQuote: quote,
-      icon: '🍀'
+      prizeName: initial.name,
+      prizeValue: initial.value,
+      prizeQuote: initial.quote,
+      icon: initial.icon
     };
-
-    try {
-      localStorage.setItem('saigon_heritage_daily_scratch_v2', JSON.stringify(newTicket));
-    } catch (e) {}
-
-    return newTicket;
   });
 
-  // Time countdown to midnight (next daily scratch ticket)
-  const [timeUntilTomorrow, setTimeUntilTomorrow] = useState<string>('');
+  // Calculate remaining cooldown in milliseconds
+  const [cooldownRemainingMs, setCooldownRemainingMs] = useState<number>(() => {
+    if (!scratchData.hasScratched || !scratchData.lastScratchedAt) return 0;
+    return Math.max(0, scratchData.lastScratchedAt + SCRATCH_COOLDOWN_MS - Date.now());
+  });
 
+  // Countdown timer effect for the 1-hour interval
   useEffect(() => {
     const updateCountdown = () => {
-      const now = new Date();
-      const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1, 0, 0, 0);
-      const diffMs = tomorrow.getTime() - now.getTime();
-      
-      const hours = Math.floor(diffMs / (1000 * 60 * 60));
-      const mins = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
-      const secs = Math.floor((diffMs % (1000 * 60)) / 1000);
+      if (!scratchData.hasScratched || !scratchData.lastScratchedAt) {
+        setCooldownRemainingMs(0);
+        return;
+      }
+      const remaining = Math.max(0, scratchData.lastScratchedAt + SCRATCH_COOLDOWN_MS - Date.now());
+      setCooldownRemainingMs(remaining);
 
-      setTimeUntilTomorrow(
-        `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
-      );
+      // When the 1 hour elapses, reset automatically to allow the next scratch!
+      if (remaining === 0 && scratchData.hasScratched) {
+        const nextOutcome = getRandomScratchOutcome();
+        const freshState: ScratchData = {
+          lastScratchedAt: 0,
+          hasScratched: false,
+          prizeName: nextOutcome.name,
+          prizeValue: nextOutcome.value,
+          prizeQuote: nextOutcome.quote,
+          icon: nextOutcome.icon
+        };
+        setScratchData(freshState);
+        setIsScratchRevealed(false);
+        setScratchProgress(0);
+        try {
+          localStorage.setItem('saigon_heritage_scratch_cooldown_v3', JSON.stringify(freshState));
+        } catch (e) {}
+      }
     };
 
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, []);
+  }, [scratchData.hasScratched, scratchData.lastScratchedAt]);
+
+  const formatCooldownTime = (ms: number) => {
+    const totalSecs = Math.ceil(ms / 1000);
+    const mins = Math.floor(totalSecs / 60);
+    const secs = totalSecs % 60;
+    return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+  };
 
   // 🎴 Scratch Card Interactive Canvas State
   const scratchCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const [scratchProgress, setScratchProgress] = useState<number>(0);
-  const [isScratchRevealed, setIsScratchRevealed] = useState<boolean>(() => dailyScratch.hasScratched);
+  const [isScratchRevealed, setIsScratchRevealed] = useState<boolean>(() => scratchData.hasScratched && cooldownRemainingMs > 0);
 
   // 📦 Chest Opening State
   const [openingChest, setOpeningChest] = useState<ChestType | null>(null);
-  const [chestResult, setChestResult] = useState<{ name: string; desc: string; icon: string } | null>(null);
+  const [chestResult, setChestResult] = useState<{ name: string; desc: string; icon: string; image?: string } | null>(null);
   const [isChestOpeningAnim, setIsChestOpeningAnim] = useState<boolean>(false);
 
   const activeUser = user || currentUser;
@@ -264,10 +348,10 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
 
   // Initialize Scratch Canvas
   useEffect(() => {
-    if (activeTab === 'scratch' && scratchCanvasRef.current && !dailyScratch.hasScratched && !isScratchRevealed) {
+    if (activeTab === 'scratch' && scratchCanvasRef.current && !scratchData.hasScratched && cooldownRemainingMs === 0 && !isScratchRevealed) {
       initScratchCanvas();
     }
-  }, [activeTab, dailyScratch.hasScratched, isScratchRevealed]);
+  }, [activeTab, scratchData.hasScratched, cooldownRemainingMs, isScratchRevealed]);
 
   const initScratchCanvas = () => {
     const canvas = scratchCanvasRef.current;
@@ -298,23 +382,23 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
     ctx.lineWidth = 4;
     ctx.strokeRect(6, 6, 328, 168);
 
-    // Overlay text
-    ctx.font = 'bold 14px sans-serif';
+    // Overlay text (No drop rate text)
+    ctx.font = 'bold 15px sans-serif';
     ctx.fillStyle = '#451a03';
     ctx.textAlign = 'center';
-    ctx.fillText('✨ VÉ CÀO MAY MẮN HÔM NAY ✨', 170, 80);
-    ctx.font = '11px sans-serif';
+    ctx.fillText('✨ THẺ CÀO MAY MẮN DI SẢN ✨', 170, 75);
+    ctx.font = '12px sans-serif';
     ctx.fillStyle = '#78350f';
-    ctx.fillText('Mỗi ngày 1 lượt duy nhất • Cào để mở thưởng', 170, 105);
-    ctx.font = 'bold 10px monospace';
+    ctx.fillText('Mỗi 1 tiếng 1 lượt cào • Thử vận may', 170, 105);
+    ctx.font = 'italic 11px sans-serif';
     ctx.fillStyle = '#92400e';
-    ctx.fillText('TỈ LỆ TRANG BỊ HIẾM: 1/1000', 170, 130);
+    ctx.fillText('Cào lớp nhũ vàng để mở kết quả', 170, 130);
 
     setScratchProgress(0);
   };
 
   const handleScratchMove = (e: React.MouseEvent<HTMLCanvasElement> | React.TouchEvent<HTMLCanvasElement>) => {
-    if (isScratchRevealed || dailyScratch.hasScratched) return;
+    if (isScratchRevealed || scratchData.hasScratched || cooldownRemainingMs > 0) return;
     const canvas = scratchCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -348,35 +432,19 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
       const next = prev + 4;
       if (next >= 50 && !isScratchRevealed) {
         setIsScratchRevealed(true);
-        const updatedTicket: DailyScratchData = {
-          ...dailyScratch,
-          hasScratched: true
+        const now = Date.now();
+        const updatedTicket: ScratchData = {
+          ...scratchData,
+          hasScratched: true,
+          lastScratchedAt: now
         };
-        setDailyScratch(updatedTicket);
+        setScratchData(updatedTicket);
+        setCooldownRemainingMs(SCRATCH_COOLDOWN_MS);
         try {
-          localStorage.setItem('saigon_heritage_daily_scratch_v2', JSON.stringify(updatedTicket));
+          localStorage.setItem('saigon_heritage_scratch_cooldown_v3', JSON.stringify(updatedTicket));
         } catch (e) {}
 
-        if (dailyScratch.isJackpot) {
-          sound.playVoucherUnlockedSound();
-          // Add legendary gear to player's inventory
-          const legendaryItem: EquippedGearItem = {
-            id: 'legendary_dragon_robe',
-            name: 'Áo Dài Hoàng Triều Gia Định Thêu Rồng Vàng (Thần Thoại)',
-            category: 'accessory',
-            icon: 'Crown',
-            buffName: 'Khí Chất Đế Vương 1/1000',
-            buffDescription: 'Tăng +50% LP thám hiểm và hào quang hoàng gia rực rỡ',
-            acquiredDate: new Date().toLocaleDateString('vi-VN'),
-            isEquipped: true,
-            bonusLPPercent: 50,
-            bonusExpPercent: 50
-          };
-          addGearToInventory(legendaryItem);
-          setEquippedMemory(getLearningMemory());
-        } else {
-          sound.playClick();
-        }
+        sound.playClick();
       }
       return next;
     });
@@ -396,10 +464,27 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
     setTimeout(() => {
       setIsChestOpeningAnim(false);
       const prizePick = chest.possiblePrizes[Math.floor(Math.random() * chest.possiblePrizes.length)];
+      
+      const prizeIllustrations: Record<string, string> = {
+        'Voucher Cà Phê Vợt Ba Lù 20k': 'https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=400&q=80',
+        'Vé Miễn Phí Bảo Tàng TP.HCM': 'https://images.unsplash.com/photo-1565008447742-97f6f38c985c?auto=format&fit=crop&w=400&q=80',
+        'Kính Lúp Soi Cổ Vật': 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=400&q=80',
+        'Voucher Cơm Tấm 50k': 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=400&q=80',
+        'Vé Du Thuyền Sông Sài Gòn 5 Sao': 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=80',
+        'Bình Men Lam Cổ Truyền': 'https://images.unsplash.com/photo-1578749556568-bc2c40e68b61?auto=format&fit=crop&w=400&q=80',
+        'Bộ Sưu Tập La Bàn Đồng': 'https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?auto=format&fit=crop&w=400&q=80',
+        'Huy Hiệu Cổ Vật Đồng': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80',
+        '+80 Linh Điểm LP': 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=400&q=80',
+        '+250 Linh Điểm LP': 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=400&q=80',
+        '+600 Linh Điểm LP': 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=400&q=80',
+        '+50 EXP': 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80'
+      };
+
       setChestResult({
         name: prizePick,
         desc: `Chúc mừng bạn đã mở thành công ${chest.name}! Phần thưởng đã được nạp tự động vào tài khoản lữ khách.`,
-        icon: chest.tier === 'gold' ? '👑' : chest.tier === 'silver' ? '💎' : '🪙'
+        icon: chest.tier === 'gold' ? '👑' : chest.tier === 'silver' ? '💎' : '🪙',
+        image: prizeIllustrations[prizePick] || chest.image
       });
       sound.playVoucherUnlockedSound();
     }, 1800);
@@ -591,59 +676,70 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
             <div>
               <div className="flex items-center justify-center gap-2 mb-2">
                 <span className="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-xs font-bold uppercase tracking-wider border border-amber-500/30">
-                  Vé Cào May Mắn Hàng Ngày
+                  Thẻ Cào May Mắn (1 Tiếng / Lần)
                 </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                  dailyScratch.hasScratched
+                <span className={`px-2.5 py-0.5 rounded-full text-xs font-bold flex items-center gap-1.5 ${
+                  cooldownRemainingMs > 0
                     ? 'bg-stone-800 text-stone-400 border border-stone-700'
                     : 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 animate-pulse'
                 }`}>
-                  {dailyScratch.hasScratched ? 'Đã dùng hôm nay (0/1)' : 'Sẵn sàng cào (1/1)'}
+                  {cooldownRemainingMs > 0 ? (
+                    <>
+                      <Clock className="w-3 h-3 text-amber-400" />
+                      Đang hồi lượt ({formatCooldownTime(cooldownRemainingMs)})
+                    </>
+                  ) : (
+                    'Sẵn sàng cào (1 lượt)'
+                  )}
                 </span>
               </div>
               <h3 className="font-['Cinzel',serif] font-bold text-xl sm:text-2xl text-amber-200 mt-1">
                 Thẻ Cào Tri Ân Lữ Khách Phương Nam
               </h3>
               <p className="text-xs sm:text-sm text-stone-300 max-w-md mx-auto mt-1">
-                {dailyScratch.hasScratched 
-                  ? 'Bạn đã hoàn thành 1 lượt cào may mắn của ngày hôm nay. Hãy quay lại sau!' 
-                  : 'Mỗi ngày đăng nhập chỉ có 1 lượt cào duy nhất. Cào lớp nhũ vàng để thử vận may!'}
+                {cooldownRemainingMs > 0 
+                  ? 'Lượt cào này chưa trúng thưởng. Mỗi lượt cào cách nhau 1 tiếng, vui lòng đợi hết thời gian chờ để thử lại vận may!' 
+                  : 'Mỗi 1 tiếng bạn nhận được 1 lượt cào may mắn. Cào lớp nhũ vàng để thử vận may di sản!'}
               </p>
+            </div>
+
+            {/* Illustrative Banner for Scratch Card */}
+            <div className="w-full max-w-md h-32 rounded-2xl overflow-hidden relative border border-amber-500/30 shadow-lg group">
+              <img
+                src="https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80"
+                alt="Vé cào may mắn di sản"
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                onError={handleImageError}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/60 to-transparent flex flex-col justify-end p-3 text-left">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400">Đặc Quyền Hội Viên Phương Nam</span>
+                <p className="text-xs text-stone-200 font-semibold">Cào lớp nhũ vàng thử vận may và chiêm nghiệm điển tích Nam Bộ (Hồi lượt mỗi 1 tiếng)!</p>
+              </div>
             </div>
 
             {/* Scratch Card Container */}
             <div className="relative w-[340px] h-[190px] rounded-2xl overflow-hidden shadow-2xl border-2 border-amber-400/80 bg-gradient-to-tr from-stone-950 via-stone-900 to-stone-950 flex flex-col items-center justify-center p-4">
               {/* Prize Behind the Scratch Coating */}
               <div className="text-center space-y-2 z-0 px-3">
-                <div className={`w-12 h-12 rounded-full mx-auto flex items-center justify-center text-2xl shadow-inner ${
-                  dailyScratch.isJackpot 
-                    ? 'bg-gradient-to-tr from-yellow-500 to-amber-600 border border-yellow-300 animate-bounce' 
-                    : 'bg-stone-800/80 border border-stone-700'
-                }`}>
-                  {dailyScratch.icon}
+                <div className="w-12 h-12 rounded-full mx-auto flex items-center justify-center text-2xl shadow-inner bg-stone-800/80 border border-stone-700">
+                  {scratchData.icon}
                 </div>
                 
-                <h4 className={`font-bold text-sm leading-snug ${
-                  dailyScratch.isJackpot ? 'text-yellow-300' : 'text-stone-200'
-                }`}>
-                  {dailyScratch.prizeName}
+                <h4 className="font-bold text-sm leading-snug text-stone-200">
+                  {scratchData.prizeName}
                 </h4>
 
-                <span className={`inline-block px-3 py-0.5 rounded-full text-xs font-black uppercase tracking-wider ${
-                  dailyScratch.isJackpot
-                    ? 'bg-gradient-to-r from-yellow-400 to-amber-500 text-stone-950 shadow-md'
-                    : 'bg-stone-800 text-stone-400 border border-stone-700'
-                }`}>
-                  {dailyScratch.prizeValue}
+                <span className="inline-block px-3 py-0.5 rounded-full text-xs font-black uppercase tracking-wider bg-stone-800 text-stone-400 border border-stone-700">
+                  {scratchData.prizeValue}
                 </span>
 
                 <p className="text-[11px] text-stone-400 italic leading-relaxed pt-1">
-                  "{dailyScratch.prizeQuote}"
+                  "{scratchData.prizeQuote}"
                 </p>
               </div>
 
-              {/* Scratchable Canvas Layer (Only active if not yet scratched) */}
-              {!dailyScratch.hasScratched && (
+              {/* Scratchable Canvas Layer (Only active if not on cooldown) */}
+              {!scratchData.hasScratched && cooldownRemainingMs === 0 && (
                 <canvas
                   ref={scratchCanvasRef}
                   onMouseMove={handleScratchMove}
@@ -653,13 +749,13 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
               )}
             </div>
 
-            {/* Daily Scratch Reset Countdown (shown cleanly when already scratched) */}
-            {dailyScratch.hasScratched && (
-              <div className="flex items-center justify-center gap-2 text-xs text-stone-400 bg-stone-950/80 px-4 py-2 rounded-2xl border border-stone-800">
-                <Clock className="w-3.5 h-3.5 text-amber-400" />
-                <span>Lượt cào mới sau:</span>
-                <span className="font-mono font-bold text-amber-300">
-                  {timeUntilTomorrow || '00:00:00'}
+            {/* Scratch Cooldown Countdown (shown when waiting 1 hour) */}
+            {cooldownRemainingMs > 0 && (
+              <div className="flex items-center justify-center gap-2 text-xs text-stone-300 bg-stone-950/90 px-4 py-2.5 rounded-2xl border border-amber-500/30 shadow-lg">
+                <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
+                <span>Lượt cào tiếp theo mở sau:</span>
+                <span className="font-mono font-bold text-amber-300 text-sm">
+                  {formatCooldownTime(cooldownRemainingMs)}
                 </span>
               </div>
             )}
@@ -697,11 +793,29 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                   {/* Decorative Glow */}
                   <div className="absolute top-0 right-0 w-32 h-32 bg-amber-500/10 rounded-full blur-2xl pointer-events-none" />
 
-                  <div className="space-y-4 text-center">
-                    <div className="w-20 h-20 rounded-3xl bg-black/40 border border-amber-400/30 mx-auto flex items-center justify-center text-4xl shadow-inner group-hover:rotate-6 transition-transform">
-                      {chest.tier === 'gold' ? '👑' : chest.tier === 'silver' ? '💎' : '🪙'}
+                  {/* Chest Illustrative Image Header */}
+                  <div className="relative h-40 -mx-6 -mt-6 mb-4 overflow-hidden rounded-t-3xl bg-stone-950">
+                    <img
+                      src={chest.image}
+                      alt={chest.name}
+                      className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                      onError={handleImageError}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/40 to-transparent" />
+                    <div className="absolute top-3 right-3 px-2.5 py-1 rounded-xl bg-stone-950/80 backdrop-blur-md border border-amber-500/30 text-amber-300 text-[11px] font-bold font-mono shadow">
+                      {chest.costLP} LP
                     </div>
+                    <div className="absolute bottom-2 left-4 flex items-center gap-2">
+                      <div className="w-8 h-8 rounded-xl bg-stone-950/90 border border-amber-400/40 flex items-center justify-center text-lg shadow">
+                        {chest.tier === 'gold' ? '👑' : chest.tier === 'silver' ? '💎' : '🪙'}
+                      </div>
+                      <span className="text-[11px] font-bold text-amber-200 uppercase tracking-wider font-['Cinzel',serif]">
+                        {chest.tier === 'gold' ? 'Rương Hoàng Gia' : chest.tier === 'silver' ? 'Rương Thượng Hạng' : 'Rương Cổ Sơ Cấp'}
+                      </span>
+                    </div>
+                  </div>
 
+                  <div className="space-y-4 text-center">
                     <div>
                       <h4 className="font-['Cinzel',serif] font-bold text-lg text-amber-200">
                         {chest.name}
@@ -882,17 +996,21 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                 }`}
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl shadow-md ${
-                    gear.isEquipped
-                      ? 'bg-gradient-to-br from-amber-500/30 to-amber-600/20 border border-amber-500/50 text-amber-300'
-                      : 'bg-stone-800 border border-stone-700 text-stone-400'
-                  }`}>
-                    {gear.category === 'headwear' ? '👒' :
-                     gear.category === 'tool' ? '🧭' :
-                     gear.category === 'accessory' ? '🧣' :
-                     gear.category === 'attire' ? '👘' :
-                     gear.category === 'water' ? '🏺' :
-                     gear.category === 'relic' ? '👑' : '🎒'}
+                  <div className="relative w-14 h-14 rounded-xl overflow-hidden border border-amber-500/40 shrink-0 shadow-md bg-stone-950">
+                    <img
+                      src={GEAR_ILLUSTRATION_MAP[gear.id] || CATEGORY_DEFAULT_GEAR_IMAGE[gear.category] || HERITAGE_FALLBACK_IMG}
+                      alt={gear.name}
+                      className="w-full h-full object-cover"
+                      onError={handleImageError}
+                    />
+                    <span className="absolute bottom-0.5 right-0.5 text-[10px] bg-stone-950/80 rounded px-1">
+                      {gear.category === 'headwear' ? '👒' :
+                       gear.category === 'tool' ? '🧭' :
+                       gear.category === 'accessory' ? '🧣' :
+                       gear.category === 'attire' ? '👘' :
+                       gear.category === 'water' ? '🏺' :
+                       gear.category === 'relic' ? '👑' : '🎒'}
+                    </span>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {gear.setPiece && (
@@ -948,6 +1066,46 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
       {/* 🎁 TAB 4: REWARDS STORE GRID */}
       {activeTab === 'store' && (
         <div className="space-y-6">
+          {/* Featured Rewards Spotlight Banner */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="relative h-28 rounded-2xl overflow-hidden border border-amber-500/30 group shadow-lg">
+              <img 
+                src="https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80" 
+                alt="Saigon Waterbus" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                onError={handleImageError}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/50 to-transparent p-3 flex flex-col justify-end">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400">Trải Nghiệm Độc Quyền</span>
+                <h5 className="text-xs font-bold text-stone-100 font-['Cinzel',serif]">Saigon Waterbus Hoàng Hôn</h5>
+              </div>
+            </div>
+            <div className="relative h-28 rounded-2xl overflow-hidden border border-amber-500/30 group shadow-lg">
+              <img 
+                src="https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=600&q=80" 
+                alt="Cà Phê Vợt" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                onError={handleImageError}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/50 to-transparent p-3 flex flex-col justify-end">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400">Ẩm Thực Trứ Danh</span>
+                <h5 className="text-xs font-bold text-stone-100 font-['Cinzel',serif]">Cà Phê Vợt Ba Lù Chợ Lớn</h5>
+              </div>
+            </div>
+            <div className="relative h-28 rounded-2xl overflow-hidden border border-amber-500/30 group shadow-lg sm:col-span-2 md:col-span-1">
+              <img 
+                src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=600&q=80" 
+                alt="Kỷ Vật Đại Sư" 
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                onError={handleImageError}
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/50 to-transparent p-3 flex flex-col justify-end">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-amber-400">Vinh Danh Kỳ Nhân</span>
+                <h5 className="text-xs font-bold text-stone-100 font-['Cinzel',serif]">Huy Chương Di Sản Đúc Mạ Vàng</h5>
+              </div>
+            </div>
+          </div>
+
           {/* Search & Filter Bar */}
           <div className="p-4 rounded-2xl bg-stone-900/90 border border-stone-800 flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 shadow-xl">
             {/* Search input */}
@@ -1063,6 +1221,7 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                         src={reward.image}
                         alt={reward.name}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={handleImageError}
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/20 to-transparent" />
                       
@@ -1160,9 +1319,15 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-fadeIn">
           <div className="max-w-md w-full bg-stone-900 border border-amber-500/40 rounded-3xl p-6 text-center space-y-6 shadow-2xl">
             {isChestOpeningAnim ? (
-              <div className="space-y-4 py-8">
-                <div className="w-24 h-24 rounded-3xl bg-amber-500/20 border border-amber-400 mx-auto flex items-center justify-center text-5xl animate-bounce">
-                  ✨📦✨
+              <div className="space-y-4 py-6">
+                <div className="relative w-32 h-32 rounded-3xl overflow-hidden border-2 border-amber-400 mx-auto shadow-2xl animate-bounce">
+                  <img
+                    src={openingChest.image}
+                    alt={openingChest.name}
+                    className="w-full h-full object-cover"
+                    onError={handleImageError}
+                  />
+                  <div className="absolute inset-0 bg-amber-500/20" />
                 </div>
                 <h3 className="font-['Cinzel',serif] font-bold text-xl text-amber-200">
                   Đang Khai Mở {openingChest.name}...
@@ -1171,8 +1336,19 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
               </div>
             ) : chestResult ? (
               <div className="space-y-5 animate-scaleUp">
-                <div className="w-20 h-20 rounded-3xl bg-gradient-to-tr from-amber-500 to-yellow-400 mx-auto flex items-center justify-center text-4xl shadow-xl">
-                  {chestResult.icon}
+                <div className="relative w-28 h-28 rounded-2xl overflow-hidden border-2 border-amber-400 mx-auto shadow-2xl bg-stone-950">
+                  {chestResult.image ? (
+                    <img
+                      src={chestResult.image}
+                      alt={chestResult.name}
+                      className="w-full h-full object-cover"
+                      onError={handleImageError}
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-gradient-to-tr from-amber-500 to-yellow-400 flex items-center justify-center text-4xl shadow-xl">
+                      {chestResult.icon}
+                    </div>
+                  )}
                 </div>
 
                 <div>
@@ -1224,6 +1400,7 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                 src={selectedRewardForRedeem.image}
                 alt={selectedRewardForRedeem.name}
                 className="w-16 h-16 rounded-xl object-cover"
+                onError={handleImageError}
               />
               <div>
                 <h4 className="font-bold text-amber-100 text-sm">{selectedRewardForRedeem.name}</h4>
@@ -1274,6 +1451,27 @@ export const RewardRedemption: React.FC<RewardRedemptionProps> = ({
                 Chứng nhận quyền thụ hưởng di sản chính thức từ Saigon Heritage Hub
               </p>
             </div>
+
+            {/* Illustrated Reward Banner inside Voucher */}
+            {activeVoucher.reward.image && (
+              <div className="relative h-28 w-full rounded-2xl overflow-hidden border border-amber-500/40 shadow-md">
+                <img
+                  src={activeVoucher.reward.image}
+                  alt={activeVoucher.reward.name}
+                  className="w-full h-full object-cover"
+                  onError={handleImageError}
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-stone-950 via-stone-950/30 to-transparent" />
+                <div className="absolute bottom-2 left-3 right-3 flex items-center justify-between">
+                  <span className="px-2 py-0.5 rounded-lg bg-stone-950/80 backdrop-blur-sm text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                    {activeVoucher.reward.partner || 'Di Sản Nam Bộ'}
+                  </span>
+                  <span className="text-xs font-mono text-amber-200 font-bold">
+                    {activeVoucher.reward.valueVND || `${activeVoucher.reward.costLP} LP`}
+                  </span>
+                </div>
+              </div>
+            )}
 
             {/* Voucher Body (Vintage Guilloche-styled card) */}
             <div className="p-5 rounded-2xl bg-stone-950 border-2 border-amber-500/40 text-center space-y-4 relative overflow-hidden shadow-inner">

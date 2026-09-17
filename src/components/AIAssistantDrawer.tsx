@@ -106,6 +106,9 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
       const locationContext = currentLocation ? `${currentLocation.name} (${currentLocation.province})` : 'TP. Hồ Chí Minh & Nam Bộ';
 
       try {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 3500);
+
         const response = await fetch('/api/gemini/chat', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -113,8 +116,10 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
             message: query,
             locationContext,
             history: messages.slice(-6)
-          })
+          }),
+          signal: controller.signal
         });
+        clearTimeout(timeoutId);
 
         if (response.ok) {
           const data = await response.json();
@@ -123,7 +128,7 @@ export const AIAssistantDrawer: React.FC<AIAssistantDrawerProps> = ({
           }
         }
       } catch (err) {
-        console.warn('Backend chat API not reachable (static web / GitHub export). Falling back to offline Ba Son AI Engine.');
+        console.warn('Backend chat API not reachable or timed out (static web / GitHub export). Falling back to instant Ba Son AI Engine.');
       }
 
       // Nếu không kết nối được server (ví dụ xuất bản ra GitHub Pages / Web tĩnh)

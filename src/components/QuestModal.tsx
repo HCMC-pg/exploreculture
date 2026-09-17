@@ -198,14 +198,16 @@ export const QuestModal: React.FC<QuestModalProps> = ({
     }
   }, [currentStepIndex, activeTierFilter]);
 
-  // Voice narration for question clue
+  // Voice narration for question clue - Strictly respects sealing of clue verse
   const toggleNarration = () => {
     if (isAudioNarrating) {
       sound.stopSpeech();
       setIsAudioNarrating(false);
     } else {
       setIsAudioNarrating(true);
-      const textToRead = currentStep.clueVerse 
+      const currentFails = wrongAttemptsCount[currentStepIndex] || 0;
+      const canReadClue = currentFails >= 2 && isClueVerseRevealed && currentStep.clueVerse;
+      const textToRead = canReadClue 
         ? `${currentStep.title}. ${currentStep.clueVerse}. ${currentStep.puzzleData.question}`
         : `${currentStep.title}. ${currentStep.storyPrompt}. ${currentStep.puzzleData.question}`;
       sound.speakText(
@@ -699,71 +701,106 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 </div>
               )}
 
-              {/* Cultural Lore & Clue Verse Box - Hidden by default to avoid revealing answers easily */}
-              {currentStep.clueVerse && (
-                <div className="rounded-2xl border border-amber-500/30 bg-gradient-to-br from-stone-950/90 via-stone-900/60 to-stone-950 p-3 relative overflow-hidden shadow-inner">
-                  {!isClueVerseRevealed ? (
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                          <BookOpen className="w-4 h-4" />
+              {/* Cultural Lore & Clue Verse Box - STRICT RULE: NIÊM PHONG TUYỆT ĐỐI. CHỈ KHI NGƯỜI CHƠI SAI NHIỀU (>= 2 LẦN) MỚI HIỆN RA VÀ CHO PHÉP CHỌN MỞ */}
+              {currentStep.clueVerse && (() => {
+                const currentFails = wrongAttemptsCount[currentStepIndex] || 0;
+                const isEligibleToOpen = currentFails >= 2;
+
+                if (!isEligibleToOpen) {
+                  return (
+                    <div className="rounded-2xl border border-stone-800 bg-stone-950/90 p-3.5 relative overflow-hidden shadow-inner flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-500 shrink-0">
+                          <Lock className="w-4 h-4 text-amber-500/70" />
                         </div>
                         <div>
-                          <p className="text-xs font-bold text-amber-200 font-['Cinzel',serif]">
-                            Manh Mối Cổ Thư & Thơ Vịnh Nam Bộ
-                          </p>
-                          <p className="text-[11px] text-stone-400">
-                            Niêm phong giữ kín đáp án. Chỉ mở khi bạn thực sự cần gợi ý!
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs font-bold text-amber-400 font-['Cinzel',serif] flex items-center gap-1.5">
+                              <span>📜</span>
+                              <span>MẬT THƯ CỔ PHƯƠNG NAM</span>
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900 text-stone-400 font-semibold border border-stone-700/60 flex items-center gap-1">
+                              <span>Mở sau 2 lần thử</span>
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-stone-400 mt-0.5">
+                            Mật thư khảo cứu được bảo lưu để người chơi tự lực thử sức. Mục mở mật thư <strong className="text-amber-300 font-semibold">sẽ hiện ra khi bạn trả lời sai từ 2 lần trở lên</strong> (Đã trả lời sai: {currentFails}/2 lần).
                           </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          sound.playDanTranhNote(587.33, 0.8);
-                          setIsClueVerseRevealed(true);
-                        }}
-                        className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-600 to-amber-500 hover:from-amber-500 hover:to-amber-400 text-stone-950 text-xs font-bold shadow flex items-center gap-1.5 transition-all shrink-0 active:scale-95 cursor-pointer"
-                      >
-                        <span>📜</span>
-                        <span>Mở Niêm Phong</span>
-                      </button>
                     </div>
-                  ) : (
-                    <div className="relative overflow-hidden space-y-2 animate-fadeIn">
-                      <div className="absolute -right-4 -bottom-4 text-amber-500/5 pointer-events-none">
-                        <BookOpen className="w-24 h-24" />
+                  );
+                }
+
+                // Khi người chơi đã trả lời sai >= 2 lần: Cho phép hiện mục ra và chọn mở
+                return (
+                  <div className="rounded-2xl border border-amber-500/50 bg-gradient-to-br from-amber-950/30 via-stone-900/80 to-stone-950 p-3.5 relative overflow-hidden shadow-md animate-fadeIn">
+                    {!isClueVerseRevealed ? (
+                      <div className="flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                            <Unlock className="w-4 h-4 text-amber-300" />
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="text-xs font-bold text-amber-200 font-['Cinzel',serif] flex items-center gap-1.5">
+                                <span>📜</span>
+                                <span>MẬT THƯ CỔ PHƯƠNG NAM</span>
+                              </p>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-950 text-emerald-300 font-bold border border-emerald-500/40">
+                                🔓 ĐÃ CHO PHÉP MỞ
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-stone-300 mt-0.5">
+                              Bạn đã thử và trả lời sai {currentFails} lần. Phong ấn đã giải trừ, bạn có muốn chọn mở mật thư để xem câu thơ dẫn lối không?
+                            </p>
+                          </div>
+                        </div>
+                        <button
+                          onClick={() => {
+                            sound.playDanTranhNote(587.33, 0.8);
+                            setIsClueVerseRevealed(true);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-extrabold shadow-lg flex items-center gap-1.5 transition-all shrink-0 active:scale-95 cursor-pointer"
+                        >
+                          <span>📜</span>
+                          <span>Chọn Mở Mật Thư Cổ</span>
+                        </button>
                       </div>
-                      <div className="flex items-center justify-between pb-1.5 border-b border-amber-500/20">
-                        <p className="text-[11px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
-                          <BookOpen className="w-3.5 h-3.5 text-amber-400" />
-                          📜 Manh Mối Cổ Thư & Thơ Vịnh Nam Bộ (Đã Mở Niêm Phong):
+                    ) : (
+                      <div className="relative overflow-hidden space-y-2.5 animate-fadeIn">
+                        <div className="flex items-center justify-between pb-1.5 border-b border-amber-500/20">
+                          <p className="text-[11px] font-bold text-amber-400 uppercase tracking-widest flex items-center gap-1.5">
+                            <BookOpen className="w-3.5 h-3.5 text-amber-400" />
+                            📜 Mật Thư Cổ & Thơ Vịnh Nam Bộ (Đã Mở Niêm Phong):
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={toggleNarration}
+                              className="text-[11px] text-amber-300 hover:text-amber-200 flex items-center gap-1 underline underline-offset-2"
+                            >
+                              <Volume2 className="w-3 h-3" />
+                              {isAudioNarrating ? 'Tắt đọc thơ' : 'Nghe ngâm thơ'}
+                            </button>
+                            <button
+                              onClick={() => {
+                                sound.playDanTranhNote(440, 0.5);
+                                setIsClueVerseRevealed(false);
+                              }}
+                              className="text-[11px] text-stone-400 hover:text-stone-200 px-2 py-0.5 rounded bg-stone-900 border border-stone-700 cursor-pointer"
+                            >
+                              Khóa lại
+                            </button>
+                          </div>
+                        </div>
+                        <p className="font-['Be_Vietnam_Pro',sans-serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-2 border-l-2 border-amber-500/60">
+                          "{currentStep.clueVerse}"
                         </p>
-                        <div className="flex items-center gap-2">
-                          <button
-                            onClick={toggleNarration}
-                            className="text-[11px] text-amber-300 hover:text-amber-200 flex items-center gap-1 underline underline-offset-2"
-                          >
-                            <Volume2 className="w-3 h-3" />
-                            {isAudioNarrating ? 'Tắt đọc thơ' : 'Nghe ngâm thơ'}
-                          </button>
-                          <button
-                            onClick={() => {
-                              sound.playDanTranhNote(440, 0.5);
-                              setIsClueVerseRevealed(false);
-                            }}
-                            className="text-[11px] text-stone-400 hover:text-stone-200 px-2 py-0.5 rounded bg-stone-900 border border-stone-700 cursor-pointer"
-                          >
-                            Ẩn lại
-                          </button>
-                        </div>
                       </div>
-                      <p className="font-['Be_Vietnam_Pro',sans-serif] text-sm sm:text-base text-amber-100 font-medium whitespace-pre-line italic leading-relaxed pl-2 border-l-2 border-amber-500/60">
-                        "{currentStep.clueVerse}"
-                      </p>
-                    </div>
-                  )}
-                </div>
-              )}
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Story Prompt Context */}
               <div className="p-3 rounded-xl bg-stone-950/70 border border-stone-800/80">
@@ -1058,128 +1095,152 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                 )}
               </div>
 
-              {/* SMART AI HINT ACCORDION - STRICT RULE: ONLY SHOW WHEN PLAYER FAILS MULTIPLE TIMES OR EXPLICITLY REQUESTS */}
+              {/* SMART AI HINT ACCORDION - STRICT RULE: NIÊM PHONG TUYỆT ĐỐI. CHỈ KHI NGƯỜI CHƠI SAI NHIỀU (>= 2 LẦN) MỚI HIỆN RA VÀ CHO PHÉP CHỌN MỞ */}
               {(() => {
                 const currentFails = wrongAttemptsCount[currentStepIndex] || 0;
-                const hasUserRequested = !!userRequestedHintSteps[currentStepIndex];
-                const isHintEligible = currentFails >= 2 || hasUserRequested;
+                const isHintEligible = currentFails >= 2;
 
+                // 1. Khi chưa sai nhiều (< 2 lần): NIÊM PHONG TUYỆT ĐỐI, không có nút yêu cầu gợi ý trước
                 if (!isHintEligible) {
                   return (
-                    <div className="p-3 rounded-2xl bg-stone-900/80 border border-stone-800/90 flex items-center justify-between gap-3 animate-fadeIn">
-                      <div className="flex items-center gap-2.5 text-xs text-stone-300">
-                        <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
-                          <Sparkles className="w-4 h-4" />
+                    <div className="p-3.5 rounded-2xl bg-stone-950/90 border border-stone-800 flex items-center justify-between gap-3 animate-fadeIn">
+                      <div className="flex items-center gap-3 text-xs text-stone-300">
+                        <div className="w-9 h-9 rounded-xl bg-stone-900 border border-stone-800 flex items-center justify-center text-stone-500 shrink-0">
+                          <Lock className="w-4 h-4 text-amber-500/70" />
                         </div>
                         <div>
-                          <span className="font-bold text-stone-200 block">Cố Vấn Ba Son Đang Đồng Hành</span>
-                          <span className="text-[11px] text-stone-400">
-                            Tự suy luận nhận tối đa LP. Gợi ý sẽ tự động kích hoạt khi trả lời sai 2 lần, hoặc bạn có thể bấm yêu cầu.
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="font-bold text-amber-400 block font-['Cinzel',serif]">
+                              CỐ VẤN BA SON AI
+                            </span>
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900 text-stone-400 font-semibold border border-stone-700/60 flex items-center gap-1">
+                              <span>Mở sau 2 lần thử</span>
+                            </span>
+                          </div>
+                          <p className="text-[11px] text-stone-400 mt-0.5">
+                            Để bảo toàn điểm thưởng LP và kích thích tư duy tự chủ, gợi ý từ Cố Vấn Ba Son <strong className="text-amber-300 font-semibold">sẽ hiện ra khi bạn trả lời sai từ 2 lần trở lên</strong> (Đã trả lời sai: {currentFails}/2 lần).
+                          </p>
                         </div>
                       </div>
-                      <button
-                        onClick={() => {
-                          sound.playClick();
-                          setUserRequestedHintSteps(prev => ({ ...prev, [currentStepIndex]: true }));
-                          setIsHintAccordionOpen(true);
-                        }}
-                        className="px-3.5 py-2 rounded-xl bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 hover:text-amber-200 border border-amber-500/40 text-xs font-bold transition-all shrink-0 flex items-center gap-1.5 shadow-sm active:scale-95"
-                      >
-                        <HelpCircle className="w-4 h-4 text-amber-400" />
-                        <span>Yêu Cầu Gợi Ý</span>
-                      </button>
                     </div>
                   );
                 }
 
+                // 2. Khi người chơi đã trả lời sai nhiều (>= 2 lần): Cho phép hiện mục ra và chọn mở
                 return (
-                  <div className="rounded-2xl border transition-all overflow-hidden bg-amber-950/20 border-amber-500/40 shadow-sm animate-fadeIn">
-                    <button
-                      onClick={() => setIsHintAccordionOpen(!isHintAccordionOpen)}
-                      className="w-full px-4 py-2.5 flex items-center justify-between text-xs text-stone-300 hover:text-amber-200 transition-colors"
-                    >
-                      <span className="font-bold flex items-center gap-2">
-                        <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
-                        <span className="text-amber-300 font-extrabold">
-                          {currentFails >= 2 
-                            ? `Gợi Ý Cố Vấn Ba Son (Kích hoạt do đã thử ${currentFails} lần)` 
-                            : 'Gợi Ý Cố Vấn Ba Son (Mở theo yêu cầu của bạn)'}
-                        </span>
-                      </span>
-                      <div className="flex items-center gap-2">
-                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900 border border-amber-500/30 text-amber-300 font-mono hidden sm:inline">
-                          3 Cấp Độ Gợi Ý
-                        </span>
-                        {isHintAccordionOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4 text-stone-400" />}
-                      </div>
-                    </button>
-
-                    {isHintAccordionOpen && (
-                      <div className="p-3.5 border-t border-stone-800 space-y-3">
-                        <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs text-stone-300 flex items-center justify-between flex-wrap gap-2">
-                          <span>
-                            {currentFails >= 2 
-                              ? `Bạn đã thử ${currentFails} lần. Cố Vấn Ba Son gợi ý các manh mối sau:` 
-                              : 'Chọn mức độ trợ giúp từ Cố Vấn Ba Son để giải mã câu đố này:'}
-                          </span>
-                          {currentFails > 0 && (
-                            <span className="text-[10px] text-amber-400 font-mono bg-stone-900 px-2 py-0.5 rounded border border-amber-500/20">
-                              Đã thử {currentFails} lần
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <button
-                            onClick={() => handleRequestHint(1)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${
-                              hintLevel === 1 
-                                ? 'bg-amber-500 text-stone-950 border-amber-300 shadow' 
-                                : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-amber-500'
-                            }`}
-                          >
-                            <span>🌱</span>
-                            <span>Mức 1: Manh Mối Khẽ Khàng</span>
-                          </button>
-                          <button
-                            onClick={() => handleRequestHint(2)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${
-                              hintLevel === 2 
-                                ? 'bg-amber-500 text-stone-950 border-amber-300 shadow' 
-                                : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-amber-500'
-                            }`}
-                          >
-                            <span>🏛️</span>
-                            <span>Mức 2: Tọa Độ & Cổ Sử</span>
-                          </button>
-                          <button
-                            onClick={() => handleRequestHint(3)}
-                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 ${
-                              hintLevel === 3 
-                                ? 'bg-amber-500 text-stone-950 border-amber-300 shadow' 
-                                : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-amber-500'
-                            }`}
-                          >
-                            <span>📜</span>
-                            <span>Mức 3: Giải Nghĩa Toàn Diện</span>
-                          </button>
-                        </div>
-
-                        {isLoadingHint ? (
-                          <div className="p-3 rounded-xl bg-stone-900 flex items-center gap-2 text-xs text-amber-300">
-                            <Sparkles className="w-4 h-4 animate-spin" />
-                            <span>Trợ lý AI đang tra cứu thư tịch cổ phương Nam...</span>
+                  <div className="rounded-2xl border transition-all overflow-hidden bg-gradient-to-br from-amber-950/25 via-stone-900/80 to-stone-950 border-amber-500/50 shadow-md animate-fadeIn">
+                    {!isHintAccordionOpen ? (
+                      <div className="p-3.5 flex items-center justify-between gap-3 flex-wrap sm:flex-nowrap">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shrink-0">
+                            <Unlock className="w-4 h-4 text-amber-300" />
                           </div>
-                        ) : aiHintText ? (
-                          <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-xs text-stone-200 leading-relaxed space-y-1">
-                            <div className="flex items-center gap-1.5 text-amber-300 font-bold">
-                              <span>💡</span>
-                              <span>Manh Mối Mức {hintLevel || 1}:</span>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs font-bold text-amber-200 font-['Cinzel',serif]">
+                                GỢI Ý CỐ VẤN BA SON AI
+                              </span>
+                              <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/40">
+                                🔓 ĐÃ CHO PHÉP MỞ (Sai {currentFails} lần)
+                              </span>
                             </div>
-                            <p>{aiHintText}</p>
+                            <p className="text-[11px] text-stone-300 mt-0.5">
+                              Do bạn đã thử và trả lời sai {currentFails} lần, Cố Vấn Ba Son mở quyền trợ giúp. Bạn có muốn chọn mở mục gợi ý này không?
+                            </p>
                           </div>
-                        ) : null}
+                        </div>
+                        <button
+                          onClick={() => {
+                            sound.playClick();
+                            setIsHintAccordionOpen(true);
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-stone-950 text-xs font-extrabold shadow-lg flex items-center gap-1.5 transition-all shrink-0 active:scale-95 cursor-pointer"
+                        >
+                          <Sparkles className="w-4 h-4" />
+                          <span>Chọn Mở Gợi Ý AI</span>
+                        </button>
+                      </div>
+                    ) : (
+                      <div>
+                        <button
+                          onClick={() => setIsHintAccordionOpen(false)}
+                          className="w-full px-4 py-2.5 flex items-center justify-between text-xs text-stone-300 hover:text-amber-200 transition-colors bg-stone-900/70 border-b border-stone-800"
+                        >
+                          <span className="font-bold flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-400 shrink-0" />
+                            <span className="text-amber-300 font-extrabold">
+                              Gợi Ý Cố Vấn Ba Son (Đã chọn mở sau {currentFails} lần thử)
+                            </span>
+                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] px-2 py-0.5 rounded-full bg-stone-900 border border-amber-500/30 text-amber-300 font-mono hidden sm:inline">
+                              3 Cấp Độ Gợi Ý
+                            </span>
+                            <ChevronUp className="w-4 h-4 text-stone-400" />
+                          </div>
+                        </button>
+
+                        <div className="p-3.5 space-y-3">
+                          <div className="p-2.5 rounded-xl bg-amber-950/30 border border-amber-500/20 text-xs text-stone-300 flex items-center justify-between flex-wrap gap-2">
+                            <span>
+                              Cố Vấn Ba Son hỗ trợ bạn 3 cấp độ manh mối khảo cứu. Hãy chọn mức bạn cần:
+                            </span>
+                            <span className="text-[10px] text-amber-400 font-mono bg-stone-900 px-2 py-0.5 rounded border border-amber-500/20">
+                              Đã thử sai: {currentFails} lần
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 flex-wrap">
+                            <button
+                              onClick={() => handleRequestHint(1)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                hintLevel === 1 
+                                  ? 'bg-amber-500 text-stone-950 border-amber-300 shadow' 
+                                  : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-amber-500'
+                              }`}
+                            >
+                              <span>🌱</span>
+                              <span>Mức 1: Manh Mối Khẽ Khàng</span>
+                            </button>
+                            <button
+                              onClick={() => handleRequestHint(2)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                hintLevel === 2 
+                                  ? 'bg-amber-500 text-stone-950 border-amber-300 shadow' 
+                                  : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-amber-500'
+                              }`}
+                            >
+                              <span>🏛️</span>
+                              <span>Mức 2: Tọa Độ & Cổ Sử</span>
+                            </button>
+                            <button
+                              onClick={() => handleRequestHint(3)}
+                              className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all flex items-center gap-1.5 cursor-pointer ${
+                                hintLevel === 3 
+                                  ? 'bg-amber-500 text-stone-950 border-amber-300 shadow' 
+                                  : 'bg-stone-900 text-stone-300 border-stone-700 hover:border-amber-500'
+                              }`}
+                            >
+                              <span>📜</span>
+                              <span>Mức 3: Giải Nghĩa Toàn Diện</span>
+                            </button>
+                          </div>
+
+                          {isLoadingHint ? (
+                            <div className="p-3 rounded-xl bg-stone-900 flex items-center gap-2 text-xs text-amber-300">
+                              <Sparkles className="w-4 h-4 animate-spin" />
+                              <span>Trợ lý AI đang tra cứu thư tịch cổ phương Nam...</span>
+                            </div>
+                          ) : aiHintText ? (
+                            <div className="p-3.5 rounded-xl bg-amber-950/30 border border-amber-500/40 text-xs text-stone-200 leading-relaxed space-y-1">
+                              <div className="flex items-center gap-1.5 text-amber-300 font-bold">
+                                <span>💡</span>
+                                <span>Manh Mối Mức {hintLevel || 1}:</span>
+                              </div>
+                              <p>{aiHintText}</p>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     )}
                   </div>

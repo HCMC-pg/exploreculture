@@ -343,6 +343,10 @@ export default function App() {
           setAuthTargetReason('general');
           setIsProfileModalOpen(true);
         }}
+        onOpenAuth={() => {
+          setAuthTargetReason('general');
+          setIsAuthModalOpen(true);
+        }}
         onOpenAI={() => {
           setAiAssistantPrompt(undefined);
           setIsAIAssistantOpen(true);
@@ -547,6 +551,11 @@ export default function App() {
           onSelectTheme={handleSelectThemeSkin}
           currentThemeId={currentThemeId}
           onResetProgress={handleResetProgress}
+          onOpenAuthModal={() => {
+            setIsProfileModalOpen(false);
+            setAuthTargetReason('general');
+            setIsAuthModalOpen(true);
+          }}
         />
       )}
 

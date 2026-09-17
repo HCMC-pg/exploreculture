@@ -35,7 +35,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Sản phẩm dệt mộc tự nhiên không hóa chất phẩm màu công nghiệp, an toàn cho da.',
     expiryDays: 60,
     remainingQuota: 150,
-    image: 'https://images.unsplash.com/photo-1607344645866-009c320c5ab8?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1606760227091-3dd870d97f1d?auto=format&fit=crop&w=600&q=80',
     valueVND: '150.000 VNĐ'
   },
   {
@@ -52,7 +52,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Áp dụng cho 01 người lớn tại Bến Bạch Đằng hoặc Bến Bình An. Xuất trình mã QR tại quầy vé trước 15 phút.',
     expiryDays: 45,
     remainingQuota: 100,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1544551763-46a013bb70d5?auto=format&fit=crop&w=600&q=80',
     valueVND: '66.000 VNĐ'
   },
   {
@@ -175,7 +175,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Kèm cáp sạc Type-C nhanh và dây đeo cổ tay. Bảo hành 12 tháng chính hãng.',
     expiryDays: 90,
     remainingQuota: 35,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1517457373958-b7bdd4587205?auto=format&fit=crop&w=600&q=80',
     valueVND: '310.000 VNĐ'
   },
   {
@@ -226,7 +226,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Kèm thẻ chứng nhận sưu tầm phiên bản giới hạn có đóng dấu nổi bảo an.',
     expiryDays: 120,
     remainingQuota: 20,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80',
     valueVND: '450.000 VNĐ'
   },
 
@@ -269,7 +269,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Vinh danh trang trọng trên Bảng Vàng Danh Dự Toàn Quốc của ứng dụng và gửi kỷ vật về tận nhà.',
     expiryDays: 180,
     remainingQuota: 12,
-    image: 'https://images.unsplash.com/photo-1579783902614-a3fb3927b675?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&w=600&q=80',
     valueVND: '1.800.000 VNĐ'
   },
   {
@@ -288,7 +288,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Số lượng chỉ 50 ấn bản trên toàn cầu. Kèm chữ ký tặng của Chủ tịch Hội Sử Học TP.HCM.',
     expiryDays: 180,
     remainingQuota: 8,
-    image: 'https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=600&q=80',
     valueVND: '2.500.000 VNĐ'
   },
   {
@@ -307,7 +307,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Vé áp dụng cho 02 người. Diễn ra định kỳ vào tối thứ Bảy tuần thứ 2 mỗi tháng. Cần đặt lịch trước 7 ngày.',
     expiryDays: 120,
     remainingQuota: 6,
-    image: 'https://images.unsplash.com/photo-1579783900882-c0d3dad7b119?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1566127444979-b3d2b654e3d7?auto=format&fit=crop&w=600&q=80',
     valueVND: '2.000.000 VNĐ'
   },
   {
@@ -326,7 +326,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Bao gồm trọn gói dịch vụ cho 02 khách, đón trả tại Bến Bạch Đằng. Voucher có giá trị 6 tháng.',
     expiryDays: 180,
     remainingQuota: 5,
-    image: 'https://images.unsplash.com/photo-1508873696983-2df5293cb32b?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80',
     valueVND: '3.600.000 VNĐ'
   },
   {
@@ -345,7 +345,7 @@ export const REWARDS: RewardItem[] = [
     terms: 'Thẻ cá nhân hóa không thể chuyển nhượng. Được công nhận chính thức bởi Ban Điều Hành Mạng Lưới Di Sản.',
     expiryDays: 365,
     remainingQuota: 3,
-    image: 'https://images.unsplash.com/photo-1589829545856-d10d557cf95f?auto=format&fit=crop&w=600&q=80',
+    image: 'https://images.unsplash.com/photo-1563986768609-322da13575f3?auto=format&fit=crop&w=600&q=80',
     valueVND: 'Vô Giá (Đặc Quyền Trọn Đời)'
   }
 ];

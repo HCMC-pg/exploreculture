@@ -107,16 +107,16 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     sound.playClick();
   };
 
-  // Google Authentication Handler
+  // Google Authentication Handler - STRICTLY requires personal @gmail.com
   const handleGoogleLogin = async (customEmail?: string) => {
     sound.playClick();
     setIsLoading(true);
     setErrorMessage('');
     
-    const targetEmail = (customEmail || googleEmailInput || email).trim();
-    if (!targetEmail || !targetEmail.includes('@')) {
+    const targetEmail = (customEmail || googleEmailInput || email).trim().toLowerCase();
+    if (!targetEmail || !targetEmail.endsWith('@gmail.com')) {
       sound.playError();
-      setErrorMessage('Vui lòng nhập địa chỉ Google Email của bạn (ví dụ: tenban@gmail.com).');
+      setErrorMessage('Yêu cầu bắt buộc: Vui lòng nhập đúng địa chỉ Gmail của chính bạn (kết thúc bằng @gmail.com) để lưu tiến trình học tập.');
       setIsLoading(false);
       return;
     }
@@ -200,10 +200,10 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     sound.playClick();
     setErrorMessage('');
     
-    const cleanEmail = email.trim();
-    if (!cleanEmail) {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.endsWith('@gmail.com')) {
       sound.playError();
-      setErrorMessage('Vui lòng nhập địa chỉ email hoặc tên định danh để bảo lưu tiến trình.');
+      setErrorMessage('Yêu cầu bắt buộc: Để bảo lưu tiến trình học tập, bạn phải đăng nhập bằng tài khoản Gmail của chính bạn (@gmail.com).');
       return;
     }
 
