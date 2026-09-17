@@ -1,6 +1,70 @@
-import { ForumPost } from '../types';
+import { ForumPost, HeritagePoll } from '../types';
+
+export const INITIAL_HERITAGE_POLLS: HeritagePoll[] = [
+  {
+    id: 'poll_1',
+    question: 'Tranh Luận Học Thuật: Chi tiết kiến trúc nào tại Dinh Độc Lập thể hiện minh triết Đông Phương sâu sắc nhất?',
+    category: 'history',
+    locationTag: 'Dinh Độc Lập',
+    totalVotes: 298,
+    discussionPrompt: 'KTS Ngô Viết Thụ đã phối hợp tài tình các chữ Hán phong thủy và lam rèm trúc cản nắng nhiệt đới.',
+    options: [
+      { id: 'opt_1_1', text: 'Rèm hoa đá hình đốt trúc lầu 2 (Khí tiết quân tử, cản nắng nhiệt đới)', votes: 142 },
+      { id: 'opt_1_2', text: 'Mặt bằng tổng thể triết lý chữ Hán: CÁT - KHẨU - TRUNG - CHỦ', votes: 104 },
+      { id: 'opt_1_3', text: 'Hệ thống boong ngầm chỉ huy thời chiến kiên cố', votes: 52 }
+    ]
+  },
+  {
+    id: 'poll_2',
+    question: 'Phong Vị Đô Thành: Thức uống bạn yêu thích nhất khi ngồi đàm đạo di sản phương Nam?',
+    category: 'cuisine',
+    locationTag: 'Phố Cà Phê Vợt',
+    totalVotes: 326,
+    discussionPrompt: 'Văn hóa cà phê vợt và thức uống thảo mộc gắn liền với ký ức sông nước bao thế hệ.',
+    options: [
+      { id: 'opt_2_1', text: 'Bạc xỉu nóng cà phê vợt thơm lừng sữa đặc', votes: 178 },
+      { id: 'opt_2_2', text: 'Cà phê đen phin đậm đà nguyên chất', votes: 94 },
+      { id: 'opt_2_3', text: 'Nước mía lau hoa cúc mát lành góc Chợ Lớn', votes: 54 }
+    ]
+  }
+];
+
+export const LIVE_COMMUNITY_ACTIVITIES = [
+  { id: 'act_1', user: 'Trần Văn Kiệt', avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80', action: 'vừa hoàn thành khảo cứu thực địa tại', target: 'Thủy Xưởng Ba Son', reward: '+120 LP', time: 'Vừa xong' },
+  { id: 'act_2', user: 'Lê Thảo My', avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=160&q=80', action: 'vừa chia sẻ ảnh ký họa cổ kính tại', target: 'Hào Sĩ Phường (Q5)', reward: '📸 Ký Họa', time: '1 phút trước' },
+  { id: 'act_3', user: 'Nguyễn Minh Khang', avatar: 'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&w=160&q=80', action: 'vừa giải mã chuỗi chuông 6 âm giai', target: 'Nhà Thờ Đức Bà', reward: '+80 LP', time: '2 phút trước' },
+  { id: 'act_4', user: 'Đặng Ngọc Hân', avatar: 'https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=160&q=80', action: 'vừa check-in và gửi lời chào từ', target: 'Bạch Dinh Vũng Tàu', reward: '⚓ Hải Đăng', time: '4 phút trước' },
+  { id: 'act_5', user: 'Cố Vấn Ba Son (AI)', avatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80', action: 'vừa trao tặng Điểm Uy Danh cho lữ khách', target: 'Thảo luận Cổ Thư', reward: '+50 Uy Danh', time: '5 phút trước' }
+];
 
 export const INITIAL_FORUM_POSTS: ForumPost[] = [
+  {
+    id: 'post_pinned_1',
+    title: '📜 [Ghim Ban Cố Vấn] Lộ trình khảo cứu liên tỉnh 21 di sản: TP.HCM - Bình Dương - Vũng Tàu',
+    authorName: 'Cố Vấn Ba Son (AI Học Thuật)',
+    authorAvatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80',
+    authorTitle: 'Cố Vấn Di Sản Phương Nam',
+    category: 'history',
+    content: 'Chào mừng các lữ khách đến với Diễn Đàn Khảo Cứu Sài Gòn Kỳ Bí!\n\nNhằm giúp các bạn thu thập đủ 21 Huy hiệu Di sản và tích lũy Điểm Uy Danh nhanh nhất, Ban Cố Vấn khuyến nghị:\n1. Bắt đầu từ trục di sản sông Sài Gòn: Chu Sư Xưởng Ba Son -> Bến Nhà Rồng -> Bưu Điện Trung Tâm;\n2. Khám phá làng nghề phương Nam tại Bình Dương: Lò gốm cổ Đại Hưng 160 năm nung củi & Sơn mài Tương Bình Hiệp;\n3. Hướng biển Đông tại Vũng Tàu: Bạch Dinh & Cổ vật tàu đắm Hòn Cau thế kỷ 17.\n\nChúc quý lữ khách luôn sáng tâm và chân cứng đá mềm!',
+    locationTag: 'Toàn Vùng Đông Nam Bộ',
+    likes: 156,
+    isPinned: true,
+    imageUrl: 'https://images.unsplash.com/photo-1583417319070-4a69db38a482?auto=format&fit=crop&w=800&q=80',
+    commentsCount: 8,
+    timestamp: 'Đã ghim',
+    badgeEarned: 'badge_ba_son',
+    comments: [
+      {
+        id: 'c_pinned_1',
+        authorName: 'Tiến Sĩ Trần Nam',
+        authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=160&q=80',
+        authorTitle: 'Cố Vấn Di Sản Cổ',
+        content: 'Một cẩm nang định hướng tuyệt vời! Các bạn trẻ nhớ chú ý ghi chép lại niên biểu và hiện vật độc bản tại từng trạm dừng chân nhé.',
+        timestamp: '2 giờ trước',
+        likes: 18
+      }
+    ]
+  },
   {
     id: 'post_1',
     title: 'Kinh nghiệm giải mã câu đố gạch Marseille ở Nhà Thờ Đức Bà',
@@ -10,6 +74,7 @@ export const INITIAL_FORUM_POSTS: ForumPost[] = [
     category: 'hints',
     content: 'Chào cả nhà, mình vừa hoàn thành nhiệm vụ ở Nhà Thờ Đức Bà sáng nay! Cho bạn nào đang kẹt ở câu hỏi về nguồn gốc gạch: hãy chú ý đến chi tiết tàu buồm và nước Pháp nhé. Gạch đỏ này không hề trát vữa nhưng chống rêu cực đỉnh, nung từ cảng Marseille. Bác nào kẹt chỗ 6 quả chuông thì hỏi Trợ lý Ba Son gợi ý cấp 1 là ra ngay!',
     locationTag: 'Nhà thờ Đức Bà Sài Gòn',
+    imageUrl: 'https://images.unsplash.com/photo-1569154941061-e231b4725ef1?auto=format&fit=crop&w=800&q=80',
     likes: 42,
     commentsCount: 6,
     timestamp: '2 giờ trước',
@@ -44,6 +109,7 @@ export const INITIAL_FORUM_POSTS: ForumPost[] = [
     category: 'culture',
     content: 'Hào Sĩ Phường buổi sáng sớm có nắng rọi xiên qua các ô cửa lá sách xanh vàng cực đẹp. Mọi người khi đến nhớ giữ trật tự và đi nhẹ nói khẽ vì đây là khu dân cư sinh sống của các cô chú lớn tuổi nha. Mình vừa đổi thành công Voucher Cà phê Vợt từ điểm thưởng nhiệm vụ này, xịn xò lắm!',
     locationTag: 'Hẻm Hào Sĩ Phường',
+    imageUrl: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?auto=format&fit=crop&w=800&q=80',
     likes: 68,
     commentsCount: 4,
     timestamp: '5 giờ trước',

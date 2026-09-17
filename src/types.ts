@@ -188,6 +188,9 @@ export interface DirectMessage {
   text: string;
   sticker?: HeritageSticker;
   timestamp: string;
+  isVoiceNote?: boolean;
+  voiceNoteDuration?: number;
+  isRead?: boolean;
 }
 
 export interface ForumComment {
@@ -200,6 +203,35 @@ export interface ForumComment {
   likes: number;
   sticker?: HeritageSticker;
   replyToAuthor?: string;
+}
+
+export interface HeritagePollOption {
+  id: string;
+  text: string;
+  votes: number;
+  percentage?: number;
+}
+
+export interface HeritagePoll {
+  id: string;
+  question: string;
+  category: string;
+  locationTag?: string;
+  options: HeritagePollOption[];
+  totalVotes: number;
+  userVotedOptionId?: string;
+  discussionPrompt?: string;
+}
+
+export interface ExpeditionSquadMember {
+  id: string;
+  name: string;
+  avatar: string;
+  title: string;
+  role: string;
+  perk: string;
+  lpBonusPercent: number;
+  joinedAt: string;
 }
 
 export interface ForumPost {
@@ -218,6 +250,9 @@ export interface ForumPost {
   timestamp: string;
   badgeEarned?: string;
   sticker?: HeritageSticker;
+  imageUrl?: string;
+  isPinned?: boolean;
+  poll?: HeritagePoll;
 }
 
 export interface ChatMessage {

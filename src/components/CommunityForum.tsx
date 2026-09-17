@@ -29,10 +29,28 @@ import {
   Zap,
   GraduationCap,
   Volume2,
-  Bookmark
+  VolumeX,
+  Bookmark,
+  Radio,
+  Play,
+  Pause,
+  CheckCheck,
+  Check,
+  Mic,
+  TrendingUp,
+  UserMinus
 } from 'lucide-react';
-import { ForumPost, UserProfile, Location3D, DirectMessage, HeritageSticker, TravelerDirectoryUser } from '../types';
-import { INITIAL_FORUM_POSTS } from '../data/forumData';
+import { 
+  ForumPost, 
+  UserProfile, 
+  Location3D, 
+  DirectMessage, 
+  HeritageSticker, 
+  TravelerDirectoryUser,
+  HeritagePoll,
+  ExpeditionSquadMember
+} from '../types';
+import { INITIAL_FORUM_POSTS, INITIAL_HERITAGE_POLLS, LIVE_COMMUNITY_ACTIVITIES } from '../data/forumData';
 import { HERITAGE_STICKERS } from '../data/stickers';
 import { sound } from '../utils/audio';
 
@@ -268,6 +286,19 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     } catch {}
     return [
       {
+        id: 'dm_voice_1',
+        senderId: 'user_sg_bason',
+        senderName: 'Cố Vấn Ba Son (AI)',
+        senderAvatar: 'https://images.unsplash.com/photo-1534447677768-be436bb09401?auto=format&fit=crop&w=160&q=80',
+        recipientId: activeUser.id,
+        recipientName: activeUser.name,
+        text: '🎙️ Ghi âm thực địa: Lời dặn dò về cấu trúc vòm trần Bưu Điện và niên biểu 1886.',
+        isVoiceNote: true,
+        voiceNoteDuration: 14,
+        isRead: true,
+        timestamp: '09:30'
+      },
+      {
         id: 'dm_1',
         senderId: 'user_sg_02',
         senderName: 'Trần Văn Kiệt',
@@ -276,7 +307,8 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
         recipientName: activeUser.name,
         text: 'Chào bạn! Bạn đã giải được mật thư số 1886 ở Bưu Điện Sài Gòn chưa? Mình vừa khám phá ra hoa văn kim loại dưới vòm trần đấy!',
         sticker: HERITAGE_STICKERS[0],
-        timestamp: '10:15'
+        timestamp: '10:15',
+        isRead: true
       },
       {
         id: 'dm_2',
@@ -286,10 +318,82 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
         recipientId: activeUser.id,
         recipientName: activeUser.name,
         text: 'Cố vấn Ba Son vừa hướng dẫn mình kiến trúc vòm tháp Nhà Thờ Đức Bà và quán cà phê vợt Ba Lù thơm lừng!',
-        timestamp: '11:42'
+        timestamp: '11:42',
+        isRead: true
       }
     ];
   });
+
+  // Heritage Community Polls State with LocalStorage Persistence
+  const [polls, setPolls] = useState<HeritagePoll[]>(() => {
+    try {
+      const saved = localStorage.getItem('saigon_heritage_polls_v2');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return INITIAL_HERITAGE_POLLS;
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('saigon_heritage_polls_v2', JSON.stringify(polls));
+    } catch {}
+  }, [polls]);
+
+  // Live Community Activity Ticker State
+  const [activityIndex, setActivityIndex] = useState<number>(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setActivityIndex(prev => (prev + 1) % LIVE_COMMUNITY_ACTIVITIES.length);
+    }, 4200);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Co-Op Expedition Squad ("Đội Khảo Cứu Nam Bộ")
+  const [expeditionSquad, setExpeditionSquad] = useState<ExpeditionSquadMember[]>(() => {
+    try {
+      const saved = localStorage.getItem('saigon_expedition_squad_v2');
+      if (saved) return JSON.parse(saved);
+    } catch {}
+    return [
+      {
+        id: 'user_sg_02',
+        name: 'Trần Văn Kiệt',
+        avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=160&q=80',
+        title: 'Nhà Thám Hiểm Trẻ',
+        role: 'Tiên Phong Thực Địa',
+        perk: '+15% LP Thưởng giải câu đố',
+        lpBonusPercent: 15,
+        joinedAt: 'Đã tham gia'
+      }
+    ];
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('saigon_expedition_squad_v2', JSON.stringify(expeditionSquad));
+    } catch {}
+  }, [expeditionSquad]);
+
+  // Check-in Beacon State
+  const [myCheckinLocation, setMyCheckinLocation] = useState<string>('Bưu Điện Trung Tâm Sài Gòn');
+  const [isCheckinModalOpen, setIsCheckinModalOpen] = useState<boolean>(false);
+
+  // Audio Voice Note Simulation Player State
+  const [activeVoiceNoteId, setActiveVoiceNoteId] = useState<string | null>(null);
+
+  // Traditional Pentatonic Ambient Lounge Audio State
+  const [isAmbientPlaying, setIsAmbientPlaying] = useState<boolean>(false);
+
+  // Ambient sound loop effect
+  useEffect(() => {
+    if (!isAmbientPlaying) return;
+    const interval = setInterval(() => {
+      const pentatonicNotes = [523.25, 587.33, 659.25, 783.99, 880.0];
+      const note = pentatonicNotes[Math.floor(Math.random() * pentatonicNotes.length)];
+      sound.playDanTranhNote(note, 0.5);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [isAmbientPlaying]);
 
   // Save changes to localStorage
   useEffect(() => {
@@ -418,11 +522,155 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
     }));
   };
 
+  // Play audio voice note simulation with authentic ambient pentatonic chime
+  const handlePlayVoiceNote = (noteId: string, durationSec: number = 12) => {
+    sound.playClick();
+    if (activeVoiceNoteId === noteId) {
+      setActiveVoiceNoteId(null);
+      return;
+    }
+    setActiveVoiceNoteId(noteId);
+    sound.playDanTranhNote(523.25, 0.5);
+    setTimeout(() => sound.playDanTranhNote(659.25, 0.4), 350);
+    setTimeout(() => sound.playDanTranhNote(783.99, 0.5), 700);
+
+    setTimeout(() => {
+      setActiveVoiceNoteId(prev => (prev === noteId ? null : prev));
+    }, durationSec * 1000);
+  };
+
+  // Interactive Heritage Poll Vote
+  const handleVotePoll = (pollId: string, optionId: string) => {
+    sound.playSuccess();
+    let chosenOptionText = '';
+
+    setPolls(prev => prev.map(p => {
+      if (p.id !== pollId) return p;
+      if (p.userVotedOptionId === optionId) return p;
+      const isNewVote = !p.userVotedOptionId;
+      const updatedOptions = p.options.map(opt => {
+        if (opt.id === optionId) {
+          chosenOptionText = opt.text;
+          return { ...opt, votes: opt.votes + 1 };
+        }
+        if (opt.id === p.userVotedOptionId) return { ...opt, votes: Math.max(0, opt.votes - 1) };
+        return opt;
+      });
+
+      return {
+        ...p,
+        options: updatedOptions,
+        totalVotes: isNewVote ? p.totalVotes + 1 : p.totalVotes,
+        userVotedOptionId: optionId
+      };
+    }));
+
+    setPlayerProgress(prev => ({
+      ...prev,
+      reputationScore: prev.reputationScore + 15
+    }));
+
+    showToast('Đã ghi nhận lá phiếu của bạn! (+15 Uy Danh) 🗳️✨', 'success');
+
+    // Simulate community scholar lively reaction in comments/live lounge
+    setTimeout(() => {
+      sound.playSuccess();
+      showToast(`Học giả Minh Khang vừa đồng thuận với góc nhìn của bạn!`, 'info');
+    }, 2200);
+  };
+
+  // Co-Op Expedition Squad Toggle
+  const handleToggleSquadMember = (traveler: TravelerDirectoryUser) => {
+    sound.playClick();
+    const exists = expeditionSquad.find(m => m.id === traveler.id);
+    if (exists) {
+      setExpeditionSquad(prev => prev.filter(m => m.id !== traveler.id));
+      showToast(`Đã rút ${traveler.name} khỏi Đội Khảo Cứu`, 'info');
+      return;
+    }
+
+    if (expeditionSquad.length >= 3) {
+      showToast('Đội Khảo Cứu đã đạt tối đa 3 bạn đồng hành (tổng 4 thành viên)!', 'info');
+      return;
+    }
+
+    const rolesByTraveler: Record<string, { role: string; perk: string; bonus: number }> = {
+      'user_sg_02': { role: 'Tiên Phong Thực Địa', perk: '+15% LP Thưởng giải câu đố', bonus: 15 },
+      'user_sg_03': { role: 'Ký Họa Sắc Màu', perk: '+10% Uy Danh khi đăng bài', bonus: 10 },
+      'user_sg_04': { role: 'Đại Cố Vấn Nam Bộ', perk: '+20% Điểm Khảo cứu', bonus: 20 },
+      'user_sg_05': { role: 'Giám Định Cổ Vật', perk: '+15% Tỷ lệ nhặt vật phẩm', bonus: 15 },
+      'user_sg_06': { role: 'Sứ Giả Biển Đảo', perk: '+10% Thưởng Vũng Tàu', bonus: 10 },
+      'user_sg_07': { role: 'Bậc Thầy Sơn Mài', perk: '+15% Thưởng Bình Dương', bonus: 15 }
+    };
+
+    const defaultRole = rolesByTraveler[traveler.id] || {
+      role: 'Đồng Đội Tri Thức',
+      perk: '+10% Điểm Khảo cứu toàn năng',
+      bonus: 10
+    };
+
+    const newMember: ExpeditionSquadMember = {
+      id: traveler.id,
+      name: traveler.name,
+      avatar: traveler.avatar,
+      title: traveler.title,
+      role: defaultRole.role,
+      perk: defaultRole.perk,
+      lpBonusPercent: defaultRole.bonus,
+      joinedAt: 'Vừa tham gia'
+    };
+
+    setExpeditionSquad(prev => [...prev, newMember]);
+    sound.playVoucherUnlockedSound();
+    showToast(`🤝 ${traveler.name} đã gia nhập Đội Khảo Cứu của bạn! (${defaultRole.perk})`, 'success');
+
+    // Scholar sends welcoming greeting into DM
+    const squadMsg: DirectMessage = {
+      id: `dm_squad_${Date.now()}`,
+      senderId: traveler.id,
+      senderName: traveler.name,
+      senderAvatar: traveler.avatar,
+      recipientId: activeUser.id,
+      recipientName: activeUser.name,
+      text: `Chào Đội Trưởng @${activeUser.name}! Rất vinh dự được sát cánh cùng bạn trong Đội Khảo Cứu Nam Bộ. Hãy cùng nhau chinh phục toàn bộ 21 di tích nhé! 🧭⭐`,
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      isRead: true
+    };
+    setDirectMessages(prev => [...prev, squadMsg]);
+  };
+
+  // Instant Heritage Check-in Beacon
+  const handleCheckinBeacon = (locationName: string) => {
+    sound.playSuccess();
+    setMyCheckinLocation(locationName);
+    setIsCheckinModalOpen(false);
+
+    // Broadcast to Live Lounge
+    const checkinLiveMsg = {
+      id: `live_checkin_${Date.now()}`,
+      senderName: activeUser.name,
+      senderAvatar: activeUser.avatar,
+      senderTitle: activeUser.title,
+      text: `📍 Vừa check-in thực địa tại ${locationName}! Xin chào tất cả các lữ khách đang khảo cứu quanh khu vực này!`,
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      locationTag: locationName
+    };
+    setLiveMessages(prev => [checkinLiveMsg, ...prev]);
+
+    setPlayerProgress(prev => ({
+      ...prev,
+      reputationScore: prev.reputationScore + 20
+    }));
+
+    showToast(`Đã phát tín hiệu check-in tại ${locationName}! (+20 Uy Danh) 📡`, 'success');
+  };
+
   // Quick Prompt Suggestions for DMs
   const QUICK_CHAT_SUGGESTIONS = [
     'Chào bạn! Rất vui được kết bạn!',
     'Bạn đã giải mật thư Bưu Điện Sài Gòn chưa?',
-    'Cho mình hỏi kinh nghiệm săn huy hiệu Sử Thi nhé?',
+    '🎙️ Cho mình xin đoạn ghi âm khảo cứu thực địa nhé!',
+    '🧭 Mời bạn gia nhập Đội Khảo Cứu Nam Bộ cùng mình!',
     'Hôm nay bạn đã tích lũy được mấy giờ học sử rồi?',
     'Bạn có mẹo gì khi khám phá Chùa Hội Khánh không?'
   ];
@@ -601,8 +849,29 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
   };
 
   // Generate contextual AI/Traveler response based on recipient identity
-  const getSimulatedResponse = (recipientName: string, userText: string): { text: string; sticker?: HeritageSticker } => {
+  const getSimulatedResponse = (recipientName: string, userText: string): { 
+    text: string; 
+    sticker?: HeritageSticker; 
+    isVoiceNote?: boolean; 
+    voiceNoteDuration?: number; 
+  } => {
     const textLower = userText.toLowerCase();
+
+    if (textLower.includes('ghi âm') || textLower.includes('nghe') || textLower.includes('giọng nói') || textLower.includes('âm thanh')) {
+      return {
+        text: `🎙️ Ghi âm từ ${recipientName}: "Chào bạn! Đây là đoạn tư liệu âm thanh mô tả không gian khảo cứu, tiếng chuông cổ và nhịp sống bên bến Bạch Đằng xưa."`,
+        isVoiceNote: true,
+        voiceNoteDuration: 15,
+        sticker: HERITAGE_STICKERS[0]
+      };
+    }
+
+    if (textLower.includes('đội') || textLower.includes('squad') || textLower.includes('khảo cứu') || textLower.includes('đồng hành')) {
+      return {
+        text: `Rất tuyệt vời! Đội Khảo Cứu Nam Bộ chúng ta sẽ nhận thêm thưởng điểm LP và kích hoạt hiệu ứng hiệp lực khi cùng nhau giải mật thư di tích!`,
+        sticker: HERITAGE_STICKERS[1]
+      };
+    }
 
     if (recipientName.includes('Trần Văn Kiệt')) {
       if (textLower.includes('bưu điện') || textLower.includes('mật thư')) {
@@ -677,10 +946,16 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
       recipientName: selectedRecipient.name,
       text: text || (sticker ? `[Đã gửi nhãn dán: ${sticker.name}]` : ''),
       sticker: sticker || undefined,
-      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
+      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+      isRead: false
     };
 
     setDirectMessages(prev => [...prev, userMsg]);
+
+    // Read receipt simulation after 700ms
+    setTimeout(() => {
+      setDirectMessages(prev => prev.map(m => m.id === userMsg.id ? { ...m, isRead: true } : m));
+    }, 700);
 
     // Set typing indicator
     setIsRecipientTyping(true);
@@ -697,6 +972,9 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
         recipientName: activeUser.name,
         text: simulated.text,
         sticker: simulated.sticker,
+        isVoiceNote: simulated.isVoiceNote,
+        voiceNoteDuration: simulated.voiceNoteDuration,
+        isRead: true,
         timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })
       };
 
@@ -1008,6 +1286,83 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
         </div>
       )}
 
+      {/* 📡 REAL-TIME COMMUNITY ACTIVITY TICKER & CHECK-IN BEACON */}
+      <div className="p-3 sm:p-3.5 rounded-2xl bg-stone-900/90 border border-amber-500/30 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
+        <div className="flex items-center gap-3 w-full sm:w-auto overflow-hidden">
+          <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center shrink-0 shadow-inner">
+            <Radio className="w-4 h-4 text-amber-400 animate-pulse" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400 flex items-center gap-1">
+                <span>Nhịp Đập Cộng Đồng Live</span>
+              </span>
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+            </div>
+            {LIVE_COMMUNITY_ACTIVITIES[activityIndex] && (
+              <p className="text-xs text-stone-200 truncate transition-all duration-300">
+                <span className="font-bold text-amber-300">
+                  {LIVE_COMMUNITY_ACTIVITIES[activityIndex].user}
+                </span>{' '}
+                <span className="text-stone-300">
+                  {LIVE_COMMUNITY_ACTIVITIES[activityIndex].action}
+                </span>{' '}
+                <span className="text-stone-400">
+                  "{LIVE_COMMUNITY_ACTIVITIES[activityIndex].target}"
+                </span>{' '}
+                <span className="text-[10px] text-amber-400/80 font-mono">
+                  ({LIVE_COMMUNITY_ACTIVITIES[activityIndex].time})
+                </span>
+              </p>
+            )}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 w-full sm:w-auto justify-end shrink-0">
+          {/* Check-in Beacon Button */}
+          <button
+            onClick={() => { sound.playClick(); setIsCheckinModalOpen(true); }}
+            className="min-h-[34px] px-3 py-1 rounded-xl bg-stone-950 hover:bg-stone-800 border border-amber-500/30 text-amber-300 text-xs font-semibold flex items-center gap-1.5 transition-colors"
+            title="Phát tín hiệu check-in thực địa"
+          >
+            <MapPin className="w-3.5 h-3.5 text-amber-400" />
+            <span className="truncate max-w-[140px]">{myCheckinLocation}</span>
+          </button>
+
+          {/* Traditional Pentatonic Ambient Audio Toggle */}
+          <button
+            onClick={() => {
+              sound.playClick();
+              setIsAmbientPlaying(!isAmbientPlaying);
+              if (!isAmbientPlaying) {
+                sound.playDanTranhNote(523.25, 0.5);
+                showToast('Đã bật thanh âm Đàn Tranh Nam Bộ du dương 🎵', 'info');
+              } else {
+                showToast('Đã tạm dừng thanh âm nền', 'info');
+              }
+            }}
+            className={`min-h-[34px] px-2.5 py-1 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all ${
+              isAmbientPlaying
+                ? 'bg-amber-500 text-stone-950 font-bold shadow-md shadow-amber-500/30'
+                : 'bg-stone-950 hover:bg-stone-800 border border-stone-800 text-stone-400 hover:text-stone-200'
+            }`}
+            title="Bật/Tắt thanh âm nhạc cụ dân tộc nền"
+          >
+            {isAmbientPlaying ? (
+              <>
+                <Volume2 className="w-3.5 h-3.5 text-stone-950 animate-bounce" />
+                <span className="hidden sm:inline">Thanh Âm: Bật</span>
+              </>
+            ) : (
+              <>
+                <VolumeX className="w-3.5 h-3.5 text-stone-400" />
+                <span className="hidden sm:inline">Thanh Âm: Tắt</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+
       {/* 🧭 NAVIGATION TABS */}
       <div className="flex items-center justify-between gap-3 border-b border-stone-800 pb-3 flex-wrap">
         <div className="flex items-center gap-2 p-1 bg-stone-900 rounded-2xl border border-stone-800 overflow-x-auto no-scrollbar w-full sm:w-auto">
@@ -1233,6 +1588,96 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
             </div>
           </div>
 
+          {/* 🗳️ INTERACTIVE HERITAGE POLLS & DEBATES WIDGET */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900/90 to-amber-950/30 border border-amber-500/30 shadow-xl space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-lg shadow-inner">
+                  🗳️
+                </div>
+                <div>
+                  <h4 className="font-bold text-sm sm:text-base text-stone-100 flex items-center gap-2">
+                    <span>Khảo Sát & Tranh Luận Di Sản Cộng Đồng</span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-bold border border-amber-500/30">
+                      Sôi Nổi
+                    </span>
+                  </h4>
+                  <p className="text-[11px] text-stone-400">
+                    Bình chọn ý kiến, nhận +15 Uy Danh và cùng đàm đạo với các nhà nghiên cứu Nam Bộ
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {polls.map(poll => {
+                const hasVoted = Boolean(poll.userVotedOptionId);
+                return (
+                  <div key={poll.id} className="p-4 rounded-2xl bg-stone-950 border border-stone-800/80 space-y-3 shadow-md flex flex-col justify-between">
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between text-[11px] text-stone-400">
+                        <span className="px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 font-semibold">
+                          {poll.category === 'academic' ? '📚 Học Thuật' : '☕ Ẩm Thực'}
+                        </span>
+                        <span className="font-mono text-stone-400">{poll.totalVotes} lượt bình chọn</span>
+                      </div>
+                      <h5 className="font-bold text-sm text-amber-200 leading-snug">
+                        {poll.question}
+                      </h5>
+                    </div>
+
+                    {/* Options list */}
+                    <div className="space-y-2 pt-1">
+                      {poll.options.map(option => {
+                        const percent = poll.totalVotes > 0 ? Math.round((option.votes / poll.totalVotes) * 100) : 0;
+                        const isSelected = poll.userVotedOptionId === option.id;
+
+                        return (
+                          <button
+                            key={option.id}
+                            onClick={() => handleVotePoll(poll.id, option.id)}
+                            className={`w-full p-2.5 rounded-xl border text-left text-xs transition-all relative overflow-hidden group ${
+                              isSelected
+                                ? 'border-amber-500 bg-amber-500/10 font-bold text-amber-200 shadow-md'
+                                : 'border-stone-800 bg-stone-900/60 hover:border-amber-500/40 text-stone-300'
+                            }`}
+                          >
+                            {/* Animated progress bar fill */}
+                            <div
+                              className={`absolute top-0 left-0 bottom-0 transition-all duration-500 ${
+                                isSelected ? 'bg-amber-500/20' : 'bg-stone-800/50'
+                              }`}
+                              style={{ width: `${percent}%` }}
+                            />
+
+                            <div className="relative z-10 flex items-center justify-between gap-2">
+                              <span className="flex items-center gap-1.5">
+                                {isSelected && <CheckCircle2 className="w-3.5 h-3.5 text-amber-400 shrink-0" />}
+                                <span>{option.text}</span>
+                              </span>
+                              <span className="font-mono text-[11px] font-bold text-amber-300 shrink-0">
+                                {percent}%
+                              </span>
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-stone-500 pt-1 border-t border-stone-900">
+                      <span>Người tạo: {poll.createdByName}</span>
+                      {hasVoted && (
+                        <span className="text-emerald-400 font-semibold flex items-center gap-1">
+                          <CheckCheck className="w-3 h-3" /> Đã bỏ phiếu (+15 Uy Danh)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           {/* Posts List */}
           <div className="space-y-4">
             {filteredPosts.map(post => {
@@ -1240,8 +1685,18 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
               return (
                 <div 
                   key={post.id} 
-                  className="p-4 sm:p-5 rounded-3xl bg-stone-900 border border-stone-800 hover:border-amber-500/30 transition-all shadow-xl space-y-3 sm:space-y-4"
+                  className={`p-4 sm:p-5 rounded-3xl bg-stone-900 border transition-all shadow-xl space-y-3 sm:space-y-4 ${
+                    post.isPinned ? 'border-amber-500/60 shadow-amber-500/10' : 'border-stone-800 hover:border-amber-500/30'
+                  }`}
                 >
+                  {/* Pinned Post Badge */}
+                  {post.isPinned && (
+                    <div className="flex items-center gap-1.5 text-[11px] font-bold text-amber-300 bg-amber-500/15 px-3 py-1 rounded-full border border-amber-500/30 w-fit">
+                      <span>📌</span>
+                      <span>ĐÃ GHIM BỞI BAN CỐ VẤN HỌC THUẬT</span>
+                    </div>
+                  )}
+
                   {/* Post Header */}
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-3">
@@ -1291,11 +1746,22 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                   </div>
 
                   {/* Post Body */}
-                  <div className="space-y-2">
+                  <div className="space-y-2.5">
                     <h3 className="font-bold text-base text-amber-200">{post.title}</h3>
                     <p className="text-xs sm:text-sm text-stone-300 leading-relaxed whitespace-pre-line">
                       {post.content}
                     </p>
+
+                    {/* Post Real Heritage Image */}
+                    {post.imageUrl && (
+                      <div className="rounded-2xl overflow-hidden border border-amber-500/30 shadow-lg max-h-80 w-full group">
+                        <img 
+                          src={post.imageUrl} 
+                          alt={post.title} 
+                          className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" 
+                        />
+                      </div>
+                    )}
 
                     {post.sticker && (
                       <div className="inline-flex items-center gap-2 p-2 rounded-xl bg-stone-950 border border-amber-500/30 text-xs text-amber-200">
@@ -1542,6 +2008,84 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
       {/* ================= VIEW 2: TRAVELERS DIRECTORY & SEARCH ================= */}
       {activeTab === 'travelers' && (
         <div className="space-y-5">
+          {/* 🧭 CO-OP EXPEDITION SQUAD BANNER */}
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-stone-900 via-stone-900 to-amber-950/40 border border-amber-500/40 shadow-2xl space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <div className="w-11 h-11 rounded-2xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 text-xl shadow-inner">
+                  🧭
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] uppercase font-bold tracking-wider text-amber-400">
+                      Đội Khảo Cứu Nam Bộ (Co-Op Squad)
+                    </span>
+                    <span className="px-2 py-0.2 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/40">
+                      {expeditionSquad.length + 1}/4 Thành Viên
+                    </span>
+                  </div>
+                  <h4 className="font-bold text-base text-stone-100">
+                    Liên Minh Đồng Đội Cùng Khảo Cứu & Nhận Thưởng LP
+                  </h4>
+                </div>
+              </div>
+
+              <div className="text-xs text-amber-300 bg-amber-500/10 px-3 py-1.5 rounded-xl border border-amber-500/20">
+                Hiệu ứng đội: <span className="font-bold text-amber-200">+{expeditionSquad.reduce((acc, m) => acc + m.lpBonusPercent, 0)}% LP Thưởng thực địa</span>
+              </div>
+            </div>
+
+            {/* Squad Members Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+              {/* Leader (Active User) */}
+              <div className="p-3 rounded-2xl bg-stone-950 border border-amber-500/40 space-y-1 relative">
+                <span className="absolute top-2 right-2 text-[9px] font-bold px-1.5 py-0.2 bg-amber-500 text-stone-950 rounded-full">
+                  Đội Trưởng
+                </span>
+                <div className="flex items-center gap-2">
+                  <img src={activeUser.avatar} alt={activeUser.name} className="w-8 h-8 rounded-xl object-cover border border-amber-400" />
+                  <div className="min-w-0 flex-1">
+                    <p className="text-xs font-bold text-amber-200 truncate">{activeUser.name}</p>
+                    <p className="text-[10px] text-stone-400 truncate">{playerProgress.authorRank}</p>
+                  </div>
+                </div>
+                <p className="text-[10px] text-emerald-400 font-medium pt-1">Chủ soái dẫn đầu đoàn</p>
+              </div>
+
+              {/* Recruited Squad Companions */}
+              {expeditionSquad.map(member => (
+                <div key={member.id} className="p-3 rounded-2xl bg-stone-950 border border-stone-800 space-y-1 relative group">
+                  <button
+                    onClick={() => {
+                      const traveler = travelers.find(t => t.id === member.id);
+                      if (traveler) handleToggleSquadMember(traveler);
+                    }}
+                    className="absolute top-2 right-2 text-[10px] text-stone-500 hover:text-rose-400 p-0.5 rounded transition-colors"
+                    title="Rút khỏi đội"
+                  >
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                  <div className="flex items-center gap-2">
+                    <img src={member.avatar} alt={member.name} className="w-8 h-8 rounded-xl object-cover border border-stone-700" />
+                    <div className="min-w-0 flex-1">
+                      <p className="text-xs font-bold text-stone-200 truncate">{member.name}</p>
+                      <p className="text-[10px] text-amber-400 truncate">{member.role}</p>
+                    </div>
+                  </div>
+                  <p className="text-[10px] text-amber-300/90 font-medium truncate pt-1">{member.perk}</p>
+                </div>
+              ))}
+
+              {/* Empty Slots */}
+              {Array.from({ length: Math.max(0, 3 - expeditionSquad.length) }).map((_, idx) => (
+                <div key={idx} className="p-3 rounded-2xl border border-dashed border-stone-800 flex flex-col items-center justify-center text-center text-stone-500 space-y-1">
+                  <UserPlus className="w-5 h-5 text-stone-600" />
+                  <p className="text-[10px]">Chưa có bạn: Bấm "Mời Vào Đội" bên dưới</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* Quick Friend & Status Filter Tabs */}
           <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             {[
@@ -1785,6 +2329,23 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                       <span>Căn Cước</span>
                     </button>
                   </div>
+
+                  {/* Co-Op Expedition Squad Recruitment Button */}
+                  <button
+                    onClick={() => handleToggleSquadMember(t)}
+                    className={`w-full min-h-[36px] py-1.5 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all text-xs font-bold ${
+                      expeditionSquad.some(m => m.id === t.id)
+                        ? 'bg-amber-500 text-stone-950 shadow-md shadow-amber-500/20'
+                        : 'bg-stone-950 hover:bg-amber-500/15 border border-amber-500/30 text-amber-300 hover:border-amber-500/60'
+                    }`}
+                  >
+                    <Compass className="w-3.5 h-3.5" />
+                    <span>
+                      {expeditionSquad.some(m => m.id === t.id)
+                        ? '✓ Đang Trong Đội Khảo Cứu (+LP Bonus)'
+                        : '+ Mời Vào Đội Khảo Cứu Nam Bộ'}
+                    </span>
+                  </button>
                 </div>
               );
             })}
@@ -1889,10 +2450,65 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                           </div>
                         </div>
                       )}
-                      <p className="text-xs leading-relaxed">{msg.text}</p>
-                      <span className={`text-[9px] block text-right ${isMe ? 'text-stone-900/70' : 'text-stone-500'}`}>
-                        {msg.timestamp}
-                      </span>
+
+                      {/* Realistic Voice Note Player or Regular Text */}
+                      {msg.isVoiceNote ? (
+                        <div className="space-y-2">
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handlePlayVoiceNote(msg.id, msg.voiceNoteDuration || 14)}
+                              className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
+                                activeVoiceNoteId === msg.id 
+                                  ? 'bg-amber-400 text-stone-950 shadow-md scale-105' 
+                                  : isMe ? 'bg-stone-900 text-amber-300' : 'bg-amber-500 text-stone-950'
+                              }`}
+                              title={activeVoiceNoteId === msg.id ? 'Tạm dừng ghi âm' : 'Phát ghi âm thực địa'}
+                            >
+                              {activeVoiceNoteId === msg.id ? (
+                                <Pause className="w-4 h-4 fill-current" />
+                              ) : (
+                                <Play className="w-4 h-4 fill-current ml-0.5" />
+                              )}
+                            </button>
+
+                            {/* Simulated Animated Waveform Bars */}
+                            <div className="flex items-center gap-1 h-6 flex-1 px-1">
+                              {[10, 18, 8, 22, 14, 24, 12, 20, 16, 22, 14, 18, 10].map((h, barIdx) => (
+                                <span
+                                  key={barIdx}
+                                  className={`w-1 rounded-full transition-all duration-300 ${
+                                    activeVoiceNoteId === msg.id
+                                      ? 'bg-amber-400 animate-pulse'
+                                      : isMe ? 'bg-stone-900/40' : 'bg-stone-700'
+                                  }`}
+                                  style={{
+                                    height: activeVoiceNoteId === msg.id ? `${(h * 1.3) % 22 + 6}px` : `${h}px`
+                                  }}
+                                />
+                              ))}
+                            </div>
+
+                            <span className="text-[10px] font-mono opacity-80 shrink-0">
+                              0:{msg.voiceNoteDuration || 14}
+                            </span>
+                          </div>
+
+                          <p className="text-xs leading-relaxed italic opacity-90">{msg.text}</p>
+                        </div>
+                      ) : (
+                        <p className="text-xs leading-relaxed">{msg.text}</p>
+                      )}
+
+                      <div className="flex items-center justify-end gap-1.5 text-[9px]">
+                        <span className={isMe ? 'text-stone-900/80' : 'text-stone-500'}>
+                          {msg.timestamp}
+                        </span>
+                        {isMe && (
+                          <span className={msg.isRead ? 'text-stone-950' : 'text-stone-700 font-bold'}>
+                            {msg.isRead ? <CheckCheck className="w-3 h-3 inline" /> : <Check className="w-3 h-3 inline" />}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 );
@@ -1966,10 +2582,59 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
               <button
                 type="button"
                 onClick={() => setShowDmStickerPicker(!showDmStickerPicker)}
-                className="min-h-[44px] min-w-[44px] rounded-2xl bg-stone-950 hover:bg-stone-800 border border-stone-800 text-amber-400 transition-colors flex items-center justify-center"
-                title="Mở bảng nhãn dán"
+                className="min-h-[44px] min-w-[44px] rounded-2xl bg-stone-950 hover:bg-stone-800 border border-stone-800 text-amber-400 transition-colors flex items-center justify-center shrink-0"
+                title="Mở bảng nhãn dán Ba Son"
               >
                 <Smile className="w-5 h-5" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  sound.playDanTranhNote(587.33, 0.4);
+                  const voiceMsg: DirectMessage = {
+                    id: `dm_voice_${Date.now()}`,
+                    senderId: activeUser.id,
+                    senderName: activeUser.name,
+                    senderAvatar: activeUser.avatar,
+                    recipientId: selectedRecipient.id,
+                    recipientName: selectedRecipient.name,
+                    text: '🎙️ Ghi âm thực địa: "Mình vừa đến địa điểm này và ghi nhận được những chi tiết chạm khắc rất độc đáo!"',
+                    isVoiceNote: true,
+                    voiceNoteDuration: 12,
+                    timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                    isRead: false
+                  };
+                  setDirectMessages(prev => [...prev, voiceMsg]);
+                  showToast('Đã phát tín hiệu ghi âm thực địa 🎙️✨', 'success');
+
+                  setIsRecipientTyping(true);
+                  setTimeout(() => {
+                    setDirectMessages(prev => prev.map(m => m.id === voiceMsg.id ? { ...m, isRead: true } : m));
+                  }, 900);
+
+                  setTimeout(() => {
+                    const recipientReply: DirectMessage = {
+                      id: `dm_reply_${Date.now()}`,
+                      senderId: selectedRecipient.id,
+                      senderName: selectedRecipient.name,
+                      senderAvatar: selectedRecipient.avatar,
+                      recipientId: activeUser.id,
+                      recipientName: activeUser.name,
+                      text: `🎙️ Nghe ghi âm của bạn rất chân thực! Âm vang không gian cổ kính tuyệt quá! Cảm ơn bạn đã chia sẻ tư liệu âm thanh này!`,
+                      sticker: HERITAGE_STICKERS[0],
+                      timestamp: new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }),
+                      isRead: true
+                    };
+                    setIsRecipientTyping(false);
+                    setDirectMessages(prev => [...prev, recipientReply]);
+                    sound.playDanTranhNote(784, 0.4);
+                  }, 2200);
+                }}
+                className="min-h-[44px] min-w-[44px] rounded-2xl bg-stone-950 hover:bg-stone-800 border border-stone-800 text-amber-400 hover:text-amber-300 transition-colors flex items-center justify-center shrink-0"
+                title="Gửi đoạn ghi âm giọng nói / khảo cứu thực địa"
+              >
+                <Mic className="w-5 h-5" />
               </button>
 
               <input
@@ -2337,6 +3002,81 @@ export const CommunityForum: React.FC<CommunityForumProps> = ({
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* 📍 FIELD CHECK-IN BEACON MODAL */}
+      {isCheckinModalOpen && (
+        <div className="fixed inset-0 z-50 bg-stone-950/85 backdrop-blur-sm flex items-center justify-center p-4 animate-fadeIn">
+          <div className="w-full max-w-md bg-stone-900 border-2 border-amber-500/40 rounded-3xl p-6 shadow-2xl text-stone-100 space-y-4 animate-scaleUp">
+            <div className="flex items-center justify-between pb-3 border-b border-stone-800">
+              <div className="flex items-center gap-2">
+                <div className="w-9 h-9 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400 shadow-inner">
+                  <MapPin className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="font-['Cinzel',serif] font-bold text-base text-amber-200">
+                    Phát Tín Hiệu Check-in Thực Địa
+                  </h3>
+                  <p className="text-[11px] text-stone-400">Nhận +25 LP và chia sẻ tọa độ với cộng đồng</p>
+                </div>
+              </div>
+              <button onClick={() => setIsCheckinModalOpen(false)} className="text-stone-400 hover:text-stone-100">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-xs text-stone-300 font-medium">Chọn địa danh bạn đang khảo cứu:</p>
+              <div className="grid grid-cols-1 gap-2 max-h-72 overflow-y-auto pr-1">
+                {[
+                  { name: 'Bưu Điện Trung Tâm Sài Gòn', landmark: 'Công xã Paris, Q.1' },
+                  { name: 'Xưởng Đóng Tàu Ba Son Lịch Sử', landmark: 'Bờ tây sông Sài Gòn, Q.1' },
+                  { name: 'Nhà Thờ Đức Bà Sài Gòn', landmark: 'Công trường Công xã Paris' },
+                  { name: 'Chợ Bến Thành & Tháp Đồng Hồ', landmark: 'Quảng trường Quách Thị Trang' },
+                  { name: 'Hầm Bí Mật Biệt Động Sài Gòn', landmark: 'Võ Văn Tần, Q.3' },
+                  { name: 'Quán Cà Phê Vợt Ba Lù Cổ Truyền', landmark: 'Chợ Phùng Hưng, Q.5' },
+                  { name: 'Bến Bạch Đằng & Cột Cờ Thủ Ngữ', landmark: 'Tôn Đức Thắng, Q.1' },
+                  { name: 'Dinh Độc Lập - Hội Trường Thống Nhất', landmark: 'Nam Kỳ Khởi Nghĩa, Q.1' },
+                  { name: 'Chùa Bà Thiên Hậu Chợ Lớn', landmark: 'Nguyễn Trãi, Q.5' }
+                ].map((loc, idx) => {
+                  const isCurrent = myCheckinLocation === loc.name;
+                  return (
+                    <button
+                      key={idx}
+                      onClick={() => handleCheckinBeacon(loc.name)}
+                      className={`w-full p-3 rounded-2xl border text-left flex items-center justify-between transition-all ${
+                        isCurrent
+                          ? 'bg-amber-500/20 border-amber-500 text-amber-200 font-bold'
+                          : 'bg-stone-950 border-stone-800 hover:border-amber-500/40 text-stone-300'
+                      }`}
+                    >
+                      <div>
+                        <p className="text-xs font-semibold">{loc.name}</p>
+                        <p className="text-[10px] text-stone-400">{loc.landmark}</p>
+                      </div>
+                      {isCurrent ? (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-amber-500 text-stone-950 font-bold">
+                          Hiện Tại
+                        </span>
+                      ) : (
+                        <span className="text-xs text-amber-400 opacity-80 font-bold">+25 LP</span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-stone-800 flex justify-end">
+              <button
+                onClick={() => setIsCheckinModalOpen(false)}
+                className="px-4 py-2 rounded-xl bg-stone-800 hover:bg-stone-700 text-xs font-bold text-stone-300 transition-colors"
+              >
+                Đóng
+              </button>
+            </div>
           </div>
         </div>
       )}
