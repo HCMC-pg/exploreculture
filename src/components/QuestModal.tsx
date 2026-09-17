@@ -60,6 +60,8 @@ interface QuestModalProps {
   onCompleteQuest: (questId: string, earnedLP: number, badgeId: string) => void;
   onShareToForum: (questTitle: string, badgeName: string, locationName: string) => void;
   onOpenJournal?: (location: Location3D) => void;
+  isGmailLoggedIn?: boolean;
+  onOpenAuthModal?: () => void;
 }
 
 export const QuestModal: React.FC<QuestModalProps> = ({
@@ -69,7 +71,9 @@ export const QuestModal: React.FC<QuestModalProps> = ({
   onClose,
   onCompleteQuest,
   onShareToForum,
-  onOpenJournal
+  onOpenJournal,
+  isGmailLoggedIn = false,
+  onOpenAuthModal
 }) => {
   // Knowledge Tier Selection & Filtering
   const [activeTierFilter, setActiveTierFilter] = useState<'all' | KnowledgeTier>('all');
@@ -1228,6 +1232,50 @@ export const QuestModal: React.FC<QuestModalProps> = ({
                   <p className="text-xs font-bold text-amber-200 mt-1 truncate">{badge?.name || 'Di Sản Nam Bộ'}</p>
                 </div>
               </div>
+
+              {/* Notice: Require Gmail login to permanently save learning progress */}
+              {!isGmailLoggedIn ? (
+                <div className="p-3.5 rounded-2xl bg-gradient-to-r from-red-950/60 via-amber-950/50 to-red-950/60 border border-amber-500/50 text-left max-w-2xl mx-auto flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-lg">
+                  <div className="flex items-start gap-2.5">
+                    <div className="w-8 h-8 rounded-xl bg-red-500/20 border border-red-500/40 flex items-center justify-center text-red-400 shrink-0">
+                      <svg className="w-4 h-4" viewBox="0 0 24 24">
+                        <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                      </svg>
+                    </div>
+                    <div>
+                      <p className="text-xs font-bold text-amber-200">Tiến trình chưa được lưu vào Gmail cá nhân của bạn</p>
+                      <p className="text-[11px] text-stone-300">
+                        Hãy đăng nhập Gmail chính chủ để bảo lưu vĩnh viễn <strong className="text-amber-400">+{quest.rewardLP} LP</strong> và huy hiệu <strong className="text-amber-300">{badge?.name || 'Di Sản'}</strong>.
+                      </p>
+                    </div>
+                  </div>
+                  {onOpenAuthModal && (
+                    <button
+                      onClick={() => {
+                        sound.playClick();
+                        onOpenAuthModal();
+                      }}
+                      className="px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-stone-950 font-black text-xs shrink-0 flex items-center gap-1.5 shadow-md transition-transform active:scale-95"
+                    >
+                      <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                        <path fill="#0c0a09" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#0c0a09" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#0c0a09" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                        <path fill="#0c0a09" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+                      </svg>
+                      <span>Đăng Nhập Gmail Để Lưu</span>
+                    </button>
+                  )}
+                </div>
+              ) : (
+                <div className="p-2.5 rounded-xl bg-emerald-950/30 border border-emerald-500/40 text-xs text-emerald-300 max-w-md mx-auto flex items-center justify-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+                  <span>Đã tự động lưu trữ tiến trình vào tài khoản Gmail cá nhân</span>
+                </div>
+              )}
 
               {/* Actions Button Row */}
               <div className="flex items-center justify-center gap-3 pt-4 flex-wrap max-w-md mx-auto">

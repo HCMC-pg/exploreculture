@@ -22,7 +22,13 @@ import {
 } from 'lucide-react';
 import { UserProfile, UserPreferences, Category } from '../types';
 import { sound } from '../utils/audio';
-import { getUserPreferences, saveUserPreferences } from '../utils/learningStorage';
+import { 
+  getUserPreferences, 
+  saveUserPreferences, 
+  setActiveSessionEmail, 
+  sanitizeEmailKey,
+  getActiveSessionEmail 
+} from '../utils/learningStorage';
 
 interface AuthModalProps {
   currentUser: UserProfile;
@@ -30,7 +36,7 @@ interface AuthModalProps {
   onClose: () => void;
   onLogin: (updatedProfile: UserProfile) => void;
   onLogout: () => void;
-  targetReason?: 'quests' | 'general';
+  targetReason?: 'quests' | 'learning_habits' | 'leaderboard' | 'general';
 }
 
 const CATEGORY_OPTIONS: { id: Category; label: string; icon: string }[] = [
@@ -107,29 +113,49 @@ export const AuthModal: React.FC<AuthModalProps> = ({
     sound.playClick();
   };
 
-  // Google Authentication Handler
+  // Google Authentication Handler with Strict Gmail Requirement
   const handleGoogleLogin = async (customEmail?: string) => {
     sound.playClick();
     setIsLoading(true);
     setErrorMessage('');
     
-    const targetEmail = (customEmail || googleEmailInput || email).trim();
-    if (!targetEmail || !targetEmail.includes('@')) {
+    let raw = (customEmail || googleEmailInput || email).trim().toLowerCase();
+    // If user provided username without domain, auto-complete to @gmail.com
+    if (raw && !raw.includes('@')) {
+      raw = `${raw}@gmail.com`;
+      setGoogleEmailInput(raw);
+    }
+
+    const targetEmail = raw;
+    if (!targetEmail || (!targetEmail.endsWith('@gmail.com') && !targetEmail.includes('@'))) {
       sound.playError();
-      setErrorMessage('Vui lòng nhập địa chỉ Google Email của bạn (ví dụ: tenban@gmail.com).');
+      setErrorMessage('Vui lòng nhập địa chỉ Gmail chính chủ của bạn (ví dụ: tenban@gmail.com) để bảo lưu tiến trình học tập.');
       setIsLoading(false);
       return;
     }
 
     try {
+      setActiveSessionEmail(targetEmail);
+
+      // Check if there is previously saved local storage data for this specific Gmail
+      const emailPartitionKey = `saigon_heritage_user_email_${sanitizeEmailKey(targetEmail)}`;
+      let partitionedData: any = {};
+      try {
+        const rawSaved = localStorage.getItem(emailPartitionKey);
+        if (rawSaved) {
+          partitionedData = JSON.parse(rawSaved);
+        }
+      } catch (e) {}
+
       const googleId = `google_${targetEmail.replace(/[^a-zA-Z0-9]/g, '_')}`;
       const payload = {
         email: targetEmail,
-        name: name.trim() || targetEmail.split('@')[0],
+        name: name.trim() || partitionedData.name || targetEmail.split('@')[0],
         picture: `https://api.dicebear.com/7.x/identicon/svg?seed=${targetEmail}`,
         googleId: googleId,
         clientProfile: {
           ...currentUser,
+          ...partitionedData,
           preferences: preferences
         }
       };
@@ -145,26 +171,32 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         sound.playSuccess();
         const mergedUser: UserProfile = {
           ...currentUser,
+          ...partitionedData,
           ...data.user,
           isLoggedIn: true,
           isGoogleLinked: true,
           authProvider: 'google',
           googleEmail: targetEmail,
           email: targetEmail,
-          lpPoints: data.user.lpPoints !== undefined ? data.user.lpPoints : currentUser.lpPoints,
+          name: name.trim() || data.user.name || targetEmail.split('@')[0],
+          lpPoints: data.user.lpPoints !== undefined ? data.user.lpPoints : (partitionedData.lpPoints !== undefined ? partitionedData.lpPoints : currentUser.lpPoints),
           lastSyncedAt: new Date().toISOString()
         };
 
+        try {
+          localStorage.setItem(emailPartitionKey, JSON.stringify(mergedUser));
+        } catch (e) {}
+
         saveUserPreferences(preferences);
         onLogin(mergedUser);
-        setSyncMessage(`Đã liên kết Google (${targetEmail}) & đồng bộ tiến trình học tập thành công!`);
+        setSyncMessage(`Đã đăng nhập Gmail (${targetEmail}) & kích hoạt lưu trữ tiến trình học tập thành công!`);
         
         setTimeout(() => {
           setSyncMessage('');
           onClose();
         }, 1400);
       } else {
-        setErrorMessage(data.error || 'Đăng nhập Google thất bại. Vui lòng kiểm tra lại.');
+        setErrorMessage(data.error || 'Đăng nhập Gmail thất bại. Vui lòng kiểm tra lại địa chỉ email.');
       }
     } catch (err) {
       sound.playSuccess();
@@ -180,7 +212,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
       };
       saveUserPreferences(preferences);
       onLogin(fallbackUser);
-      setSyncMessage(`Đã bảo lưu tiến trình học tập và sở thích với Google (${targetEmail})!`);
+      setSyncMessage(`Đã kích hoạt lưu trữ tiến trình học tập theo tài khoản Gmail (${targetEmail})!`);
       setTimeout(() => {
         setSyncMessage('');
         onClose();
@@ -302,14 +334,28 @@ export const AuthModal: React.FC<AuthModalProps> = ({
         
         {/* Contextual Reason Banner */}
         {targetReason === 'quests' && (
-          <div className="bg-gradient-to-r from-amber-600/30 via-yellow-500/20 to-amber-600/30 border-b border-amber-500/40 p-3 flex items-center gap-2.5">
+          <div className="bg-gradient-to-r from-red-600/30 via-amber-600/30 to-yellow-500/20 border-b border-amber-500/40 p-3 flex items-center gap-2.5 shrink-0">
             <div className="w-8 h-8 rounded-xl bg-amber-500/30 border border-amber-400/50 flex items-center justify-center text-amber-300 shrink-0">
               <Sparkles className="w-4 h-4" />
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Đồng Bộ Hồ Sơ Khám Phá</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-300">Yêu Cầu Đăng Nhập Gmail Chính Chủ</span>
               <p className="text-xs font-semibold text-stone-100">
-                Lưu câu trả lời, nhận điểm thưởng LP và bảo lưu huy hiệu di sản của bạn!
+                Đăng nhập Gmail của bạn để bảo lưu vĩnh viễn kết quả giải đố, điểm thưởng LP và huy hiệu di sản!
+              </p>
+            </div>
+          </div>
+        )}
+
+        {targetReason === 'learning_habits' && (
+          <div className="bg-gradient-to-r from-blue-600/30 via-indigo-600/30 to-amber-600/20 border-b border-blue-500/40 p-3 flex items-center gap-2.5 shrink-0">
+            <div className="w-8 h-8 rounded-xl bg-blue-500/30 border border-blue-400/50 flex items-center justify-center text-blue-300 shrink-0">
+              <Heart className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">Bảo Lưu Thói Quen & Sở Thích Học Tập</span>
+              <p className="text-xs font-semibold text-stone-100">
+                Vui lòng đăng nhập Gmail của chính mình để lưu trữ sở thích chủ đề, chuỗi học tập và dữ liệu khảo cứu cá nhân.
               </p>
             </div>
           </div>
@@ -323,15 +369,15 @@ export const AuthModal: React.FC<AuthModalProps> = ({
             </div>
             <div>
               <h2 className="font-['Be_Vietnam_Pro',sans-serif] font-black text-base text-amber-200 flex items-center gap-2">
-                <span>Hồ Sơ & Tiến Trình Di Sản</span>
+                <span>Đăng Nhập Gmail & Tiến Trình Di Sản</span>
                 {isGoogleLinked && (
                   <span className="px-2 py-0.5 rounded-full bg-blue-500/20 text-blue-300 border border-blue-400/40 text-[10px] font-bold">
-                    Google Connected
+                    Gmail Đã Kết Nối
                   </span>
                 )}
               </h2>
               <p className="text-[10px] text-stone-400">
-                Bảo lưu điểm LP, huân chương khảo cứu và sở thích học tập cá nhân
+                Lưu trữ độc lập theo từng tài khoản Gmail, bảo lưu điểm LP và sở thích học tập
               </p>
             </div>
           </div>
@@ -613,17 +659,53 @@ export const AuthModal: React.FC<AuthModalProps> = ({
 
                   {/* Personal Google Email Input */}
                   <div className="space-y-1.5">
-                    <label className="text-xs font-semibold text-stone-300 flex items-center justify-between">
-                      <span>Địa Chỉ Email Google Của Bạn:</span>
-                      <span className="text-[10px] text-blue-400">@gmail.com</span>
-                    </label>
-                    <input
-                      type="email"
-                      value={googleEmailInput}
-                      onChange={(e) => setGoogleEmailInput(e.target.value)}
-                      placeholder="vidu: nguyenvana@gmail.com"
-                      className="w-full p-2.5 rounded-xl bg-stone-950 border border-blue-500/40 focus:border-blue-400 text-xs text-blue-200 font-mono outline-none"
-                    />
+                    <div className="flex items-center justify-between">
+                      <label className="text-xs font-semibold text-stone-300 flex items-center gap-1.5">
+                        <Mail className="w-3.5 h-3.5 text-blue-400" />
+                        <span>Địa Chỉ Gmail Chính Chủ Của Bạn (Bắt buộc):</span>
+                      </label>
+                      <span className="text-[10px] text-blue-400 font-mono">@gmail.com</span>
+                    </div>
+
+                    <div className="relative">
+                      <input
+                        type="email"
+                        value={googleEmailInput}
+                        onChange={(e) => setGoogleEmailInput(e.target.value)}
+                        placeholder="vidu: yri241709@gmail.com"
+                        className="w-full p-2.5 rounded-xl bg-stone-950 border border-blue-500/50 focus:border-blue-400 text-xs text-blue-200 font-mono outline-none pr-24"
+                        required
+                      />
+                      {googleEmailInput && !googleEmailInput.includes('@') && (
+                        <button
+                          type="button"
+                          onClick={() => setGoogleEmailInput(`${googleEmailInput.trim()}@gmail.com`)}
+                          className="absolute right-2 top-1/2 -translate-y-1/2 px-2 py-1 rounded-lg bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 text-[10px] font-bold border border-blue-400/40"
+                        >
+                          + @gmail.com
+                        </button>
+                      )}
+                    </div>
+
+                    {/* Quick Suggestion for Current User Email */}
+                    <div className="flex items-center gap-1.5 flex-wrap pt-1">
+                      <span className="text-[10px] text-stone-400">Gợi ý tài khoản:</span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setGoogleEmailInput('yri241709@gmail.com');
+                          sound.playClick();
+                        }}
+                        className="text-[10px] font-mono px-2 py-0.5 rounded-md bg-stone-950 hover:bg-blue-950/50 text-blue-300 border border-blue-500/30 flex items-center gap-1 transition-colors"
+                      >
+                        <span>yri241709@gmail.com</span>
+                        <span className="text-[9px] text-amber-400 font-sans">⚡ Chọn nhanh</span>
+                      </button>
+                    </div>
+
+                    <p className="text-[10px] text-stone-400 leading-relaxed pt-0.5">
+                      🔒 Mọi tiến trình học tập, huy hiệu và thói quen sẽ được lưu trữ độc lập theo tài khoản Gmail này.
+                    </p>
                   </div>
 
                   {/* Name Input */}
@@ -693,7 +775,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({
                           <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
                           <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
                         </svg>
-                        <span>Đăng Nhập Bằng Google & Lưu Trữ Tiến Trình & Sở Thích</span>
+                        <span>Đăng Nhập Gmail Của Bạn & Kích Hoạt Lưu Tiến Trình Học Tập</span>
                       </>
                     )}
                   </button>

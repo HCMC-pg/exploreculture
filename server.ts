@@ -1107,7 +1107,7 @@ function calculateLearningAnalytics(userProfile: any) {
   };
 }
 
-// User Profile & Learning Progress Save Endpoint: OPEN & SEAMLESS (No Google/Gmail barrier)
+// User Profile & Learning Progress Save Endpoint: Partitioned by individual Gmail account
 app.post('/api/user/save-progress', (req, res) => {
   try {
     const { userProfile } = req.body;
@@ -1115,16 +1115,23 @@ app.post('/api/user/save-progress', (req, res) => {
       return res.status(400).json({ success: false, error: 'Thiếu dữ liệu hồ sơ người dùng.' });
     }
 
-    const userId = userProfile.id || `user_${Date.now()}`;
-    const existingData = userProgressStore[userId] || {};
+    const userEmail = (userProfile.googleEmail || userProfile.email || '').trim().toLowerCase();
+    const userId = userProfile.id || (userEmail ? `gmail_${userEmail.replace(/[^a-zA-Z0-9]/g, '_')}` : `user_${Date.now()}`);
+    
+    // Retrieve existing data by Gmail if present, otherwise by userId
+    const existingData = (userEmail ? userProgressStore[userEmail] : null) || userProgressStore[userId] || {};
     const updated = {
       ...existingData,
       ...userProfile,
       id: userId,
+      email: userEmail || userProfile.email,
       lastSyncedAt: new Date().toISOString()
     };
 
     userProgressStore[userId] = updated;
+    if (userEmail) {
+      userProgressStore[userEmail] = updated;
+    }
     const analytics = calculateLearningAnalytics(updated);
 
     res.json({ 
@@ -1132,7 +1139,9 @@ app.post('/api/user/save-progress', (req, res) => {
       user: updated,
       learningProgress: analytics,
       lastSyncedAt: updated.lastSyncedAt,
-      message: 'Tiến trình khám phá di sản đã được bảo lưu an toàn!' 
+      message: userEmail 
+        ? `Tiến trình khám phá di sản đã được đồng bộ an toàn cho tài khoản Gmail: ${userEmail}` 
+        : 'Tiến trình khám phá di sản đã được bảo lưu an toàn!' 
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });

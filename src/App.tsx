@@ -136,7 +136,7 @@ export default function App() {
   }, [user.googleEmail, user.email, user.id, user.isGoogleLinked, user.isLoggedIn, user.name, user.username, user.avatar]);
 
   // Auth requirement & pending navigation state
-  const [authTargetReason, setAuthTargetReason] = useState<'quests' | 'leaderboard' | 'general'>('general');
+  const [authTargetReason, setAuthTargetReason] = useState<'quests' | 'learning_habits' | 'leaderboard' | 'general'>('general');
   const [pendingTabAfterAuth, setPendingTabAfterAuth] = useState<'map' | 'quests' | 'badges' | 'leaderboard' | 'forum' | 'chat' | 'rewards' | null>(null);
   const [pendingQuestAfterAuth, setPendingQuestAfterAuth] = useState<Location3D | null>(null);
 
@@ -203,6 +203,78 @@ export default function App() {
     setIsJournalModalOpen(true);
   };
 
+  // Cloud Sync Status Tracking
+  const [isCloudSyncing, setIsCloudSyncing] = useState<boolean>(false);
+  const [lastSyncedTime, setLastSyncedTime] = useState<string>('Vừa xong');
+
+  // Initial mount: Restore any remotely saved progress from server for current user / Gmail
+  useEffect(() => {
+    const userEmail = (user.googleEmail || user.email || '').trim().toLowerCase();
+    const identifier = userEmail || user.id;
+    if (!identifier) return;
+
+    fetch(`/api/user/get-progress/${encodeURIComponent(identifier)}`)
+      .then(res => res.json())
+      .then(data => {
+        if (data.success && data.user) {
+          const remote = data.user;
+          setUser(prev => {
+            const remoteLP = typeof remote.lpPoints === 'number' ? remote.lpPoints : 0;
+            const remoteBadges = Array.isArray(remote.badgesUnlocked) ? remote.badgesUnlocked : [];
+            const remoteQuests = Array.isArray(remote.completedQuests) ? remote.completedQuests : [];
+            
+            const mergedBadges = Array.from(new Set([...prev.badgesUnlocked, ...remoteBadges]));
+            const mergedQuests = Array.from(new Set([...prev.completedQuests, ...remoteQuests]));
+            const finalLP = Math.max(prev.lpPoints, remoteLP);
+
+            return {
+              ...prev,
+              ...remote,
+              lpPoints: finalLP,
+              badgesUnlocked: mergedBadges,
+              completedQuests: mergedQuests,
+              isLoggedIn: prev.isLoggedIn || remote.isLoggedIn,
+              isGoogleLinked: prev.isGoogleLinked || remote.isGoogleLinked,
+              googleEmail: prev.googleEmail || remote.googleEmail || userEmail
+            };
+          });
+          setLastSyncedTime(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+        }
+      })
+      .catch(err => console.debug('Initial server sync fetch deferred:', err));
+  }, []);
+
+  // Manual Instant Cloud Sync Handler
+  const handleManualSync = useCallback(async () => {
+    setIsCloudSyncing(true);
+    sound.playClick();
+    const userEmail = (user.googleEmail || user.email || '').trim().toLowerCase();
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      if (userEmail) {
+        localStorage.setItem(`saigon_heritage_user_email_${sanitizeEmailKey(userEmail)}`, JSON.stringify(user));
+      }
+      const res = await fetch('/api/user/save-progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          userProfile: {
+            ...user,
+            email: userEmail || user.id
+          }
+        })
+      });
+      if (res.ok) {
+        setLastSyncedTime(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+        sound.playNotification();
+      }
+    } catch (e) {
+      console.warn('Manual sync failed:', e);
+    } finally {
+      setIsCloudSyncing(false);
+    }
+  }, [user]);
+
   // Robust Player Progress & Learning Memory Persistence
   useEffect(() => {
     const userEmail = (user.googleEmail || user.email || '').trim().toLowerCase();
@@ -223,6 +295,7 @@ export default function App() {
 
     // Debounced automatic server synchronization for cloud persistence
     const syncTimer = setTimeout(() => {
+      setIsCloudSyncing(true);
       fetch('/api/user/save-progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -232,7 +305,14 @@ export default function App() {
             email: userEmail || user.id
           }
         })
-      }).catch(err => console.debug('Server progress sync deferred:', err));
+      })
+      .then(res => {
+        if (res.ok) {
+          setLastSyncedTime(new Date().toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }));
+        }
+      })
+      .catch(err => console.debug('Server progress sync deferred:', err))
+      .finally(() => setIsCloudSyncing(false));
     }, 1200);
 
     return () => clearTimeout(syncTimer);
@@ -280,8 +360,17 @@ export default function App() {
     }
   };
 
-  // Handle quest completion
+  // Handle quest completion with mandatory Gmail login enforcement for progress saving
   const handleCompleteQuest = (questId: string, earnedLP: number, badgeId: string) => {
+    const isGmailLoggedIn = Boolean(user.isLoggedIn && (user.isGoogleLinked || user.googleEmail || (user.email && user.email.toLowerCase().includes('@gmail.com'))));
+    
+    // If not authenticated via personal Gmail, immediately open Gmail auth modal to save progress
+    if (!isGmailLoggedIn) {
+      sound.playNotification();
+      setAuthTargetReason('quests');
+      setIsAuthModalOpen(true);
+    }
+
     setUser(prev => {
       const newBadges = prev.badgesUnlocked.includes(badgeId)
         ? prev.badgesUnlocked
@@ -388,6 +477,10 @@ export default function App() {
           setAuthTargetReason('general');
           setIsProfileModalOpen(true);
         }}
+        onOpenAuthModal={() => {
+          setAuthTargetReason('general');
+          setIsAuthModalOpen(true);
+        }}
         onOpenAI={() => {
           setAiAssistantPrompt(undefined);
           setIsAIAssistantOpen(true);
@@ -397,6 +490,9 @@ export default function App() {
         onOpenItineraryPlanner={() => setIsItineraryModalOpen(true)}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
         currentThemeId={currentThemeId}
+        isCloudSyncing={isCloudSyncing}
+        onManualSync={handleManualSync}
+        lastSyncedTime={lastSyncedTime}
       />
 
       {/* Main Content View Switcher */}
@@ -539,6 +635,11 @@ export default function App() {
           onCompleteQuest={handleCompleteQuest}
           onShareToForum={handleShareToForum}
           onOpenJournal={handleOpenJournal}
+          isGmailLoggedIn={Boolean(user.isLoggedIn && (user.isGoogleLinked || user.googleEmail || (user.email && user.email.toLowerCase().includes('@gmail.com'))))}
+          onOpenAuthModal={() => {
+            setAuthTargetReason('quests');
+            setIsAuthModalOpen(true);
+          }}
         />
       )}
 
@@ -594,6 +695,10 @@ export default function App() {
           onSelectTheme={handleSelectThemeSkin}
           currentThemeId={currentThemeId}
           onResetProgress={handleResetProgress}
+          onOpenAuthModal={() => {
+            setAuthTargetReason('learning_habits');
+            setIsAuthModalOpen(true);
+          }}
         />
       )}
 

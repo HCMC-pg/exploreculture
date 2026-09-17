@@ -172,6 +172,32 @@ class HeritageAudioEngine {
     });
   }
 
+  // 5b. Notification Chime
+  public playNotification() {
+    if (this.isMuted) return;
+    this.initContext();
+    if (!this.ctx || !this.masterGain) return;
+
+    const notes = [587.33, 880]; // D5, A5
+    notes.forEach((freq, idx) => {
+      if (!this.ctx || !this.masterGain) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime + idx * 0.1);
+
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime + idx * 0.1);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + idx * 0.1 + 0.35);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+
+      osc.start(this.ctx.currentTime + idx * 0.1);
+      osc.stop(this.ctx.currentTime + idx * 0.1 + 0.4);
+    });
+  }
+
   // 6. Song Lang Wooden Clapper
   public playSongLangBeat(delayOffset: number = 0) {
     if (this.isMuted) return;
